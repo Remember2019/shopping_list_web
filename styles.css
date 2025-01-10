@@ -1,0 +1,208 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    margin: 20px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+    color: #333;
+    overflow: hidden;
+}
+
+.container {
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.total-card {
+    margin-top: 10px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.total-card h1 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #555;
+}
+
+.total-card p {
+    margin: 5px 0 0;
+    font-size: 2em;
+    font-weight: bold;
+    color: #000;
+}
+
+/* 删除按钮的样式 */
+.delete-btn {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.delete-btn:hover {
+    background-color: #e60000;
+}
+
+/* 商品项样式 */
+.item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.item span {
+    font-size: 14px;
+}
+
+/* 商品列表的占位符 */
+.placeholder {
+    font-size: 16px;
+    color: #888;
+    text-align: center;
+    margin-top: 50px;
+}
+
+
+.item-list {
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.item-list .placeholder {
+    text-align: center;
+    color: #aaa;
+}
+
+.item-list .item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.menu-bar {
+    display: flex;
+    width: 100%;
+}
+
+.actions {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.action-btn {
+    width: 24px;
+    padding: 10px 0;
+    border: none;
+    background-color: transparent;
+    color: #0077de;
+    cursor: pointer;
+}
+
+
+/* 初始隐藏状态 */
+.sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    pointer-events: none; /* 避免隐藏时触发点击 */
+    transition: opacity 0.3s ease;
+}
+
+/* 显示时背景淡入 */
+.sheet.show {
+    opacity: 1;
+    pointer-events: all; /* 允许点击 */
+}
+
+/* 表单内容 */
+.sheet-content {
+    width: 100%;
+    height: 92%;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    padding: 20px;
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(100%); /* 初始状态在屏幕下方 */
+    transition: transform 0.3s ease;
+}
+
+/* 滑入到屏幕底部 */
+.sheet.show .sheet-content {
+    transform: translateY(0); /* 滑入到屏幕可见区域 */
+}
+
+.sheet-content h3 {
+    margin: 15px 0 30px;
+    font-size: 1.8em;
+    color: #333;
+}
+
+.sheet-content label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.sheet-content input {
+    width: 94%;
+    padding: 10px;
+    margin-bottom: 20px;
+    margin-right: 20px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+}
+
+.confirm-btn, .close-btn {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+.confirm-btn {
+    background: #007bff;
+    color: white;
+}
+
+.close-btn {
+    background: #eee;
+    color: #333;
+}
+

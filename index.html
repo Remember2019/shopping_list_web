@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>购物清单 - iOS 风格</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+    <!-- 菜单栏 -->
+    <div class="menu-bar">
+        <!-- 添加按钮与扫码按钮 -->
+        <div class="actions">
+            <button class="action-btn" id="add-item-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="action-btn" id="scan-item-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                    <!-- 左上角的内直角拐角 -->
+                    <path d="M6,2 H2 V6" stroke="currentColor" stroke-width="2" fill="none"></path>
+
+                    <!-- 右上角的内直角拐角 -->
+                    <path d="M18,2 H22 V6" stroke="currentColor" stroke-width="2" fill="none"></path>
+
+                    <!-- 右下角的内直角拐角 -->
+                    <path d="M22,18 V22 H18" stroke="currentColor" stroke-width="2" fill="none"></path>
+
+                    <!-- 左下角的内直角拐角 -->
+                    <path d="M2,18 V22 H6" stroke="currentColor" stroke-width="2" fill="none"></path>
+
+                    <!-- 中间的三条细竖线 -->
+                    <path d="M9,6 V18" stroke="currentColor" stroke-width="2"></path>
+                    <path d="M12,6 V18" stroke="currentColor" stroke-width="2"></path>
+                    <path d="M15,6 V18" stroke="currentColor" stroke-width="2"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- 总价格卡片 -->
+    <div class="total-card">
+        <h1>总价格</h1>
+        <p id="total-price">¥ 0.00</p>
+    </div>
+
+    <!-- 商品列表 -->
+    <div class="item-list" id="item-list">
+        <p class="placeholder">您的购物清单为空</p>
+        <!-- 示例商品项 -->
+        <!-- <div class="item">
+            <span>商品名称 x 数量</span>
+            <span>¥ 总价</span>
+            <button class="delete-btn">删除</button>
+        </div> -->
+    </div>
+</div>
+
+<!-- 底部滑入页面 -->
+<div id="add-item-sheet" class="sheet">
+    <div class="sheet-content">
+        <h3>添加商品</h3>
+        <label>商品名称</label>
+        <input type="text" id="item-name" placeholder="输入商品名称">
+
+        <label>数量</label>
+        <input type="number" id="item-quantity" min="1" value="1">
+
+        <label>单价</label>
+        <input type="number" id="item-price" step="0.01" min="0" placeholder="输入单价">
+
+        <button class="confirm-btn" id="submit-item">确认添加</button>
+        <button class="close-btn" id="close-sheet-btn">取消</button>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

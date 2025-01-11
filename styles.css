@@ -63,7 +63,7 @@ body {
 .item-list {
     display: flex;
     flex-direction: column;
-    width: 105%;
+    width: 100%;
     max-height: 650px;
     overflow-y: scroll;
 }

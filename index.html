@@ -39,6 +39,11 @@
                     <path d="M15,6 V18" stroke="currentColor" stroke-width="2"></path>
                 </svg>
             </button>
+            <button class="action-btn" id="clear-list-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M6 6h12M6 6l2 14h8l2-14H6z" fill="none" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </button>
         </div>
     </div>
 
@@ -82,19 +87,6 @@
 </div>
 
 <script src="script.js"></script>
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('Service Worker 注册成功:', registration);
-                })
-                .catch(error => {
-                    console.error('Service Worker 注册失败:', error);
-                });
-        });
-    }
-</script>
 
 </body>
 </html>

@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const addItemBtn = document.getElementById("add-item-btn");
     const scanItemBtn = document.getElementById("scan-item-btn");
     const closeSheetBtn = document.getElementById("close-sheet-btn");
+    const clearListBtn = document.getElementById('clear-list-btn');
     const sheet = document.getElementById("add-item-sheet");
     const submitItem = document.getElementById("submit-item");
     const itemList = document.getElementById("item-list");
@@ -30,14 +31,22 @@ document.addEventListener("DOMContentLoaded", () => {
         itemList.innerHTML = ''; // 清空现有列表
 
         totalPrice = 0; // 重置总价
-        shoppingList.forEach((item, index) => {
-            const total = item.quantity * item.price;
-            totalPrice += total;
 
-            // 创建商品项卡片
-            const itemElem = document.createElement("div");
-            itemElem.className = "item";
-            itemElem.innerHTML = `
+        // 判断购物列表是否为空
+        if (shoppingList.length === 0) {
+            const placeholderElem = document.createElement("p");
+            placeholderElem.className = "placeholder";
+            placeholderElem.textContent = "您的购物清单为空";
+            itemList.appendChild(placeholderElem); // 显示占位符
+        } else {
+            shoppingList.forEach((item, index) => {
+                const total = item.quantity * item.price;
+                totalPrice += total;
+
+                // 创建商品项卡片
+                const itemElem = document.createElement("div");
+                itemElem.className = "item";
+                itemElem.innerHTML = `
                 <div class="item-left">
                     <div class="item-icon">${item.name.charAt(0)}</div>
                     <div class="item-info">
@@ -48,24 +57,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 <span class="item-price">¥ ${total.toFixed(2)}</span>
             `;
 
-            // 添加长按事件
-            itemElem.addEventListener("touchstart", (e) => {
-                selectedItemIndex = index; // 记录被长按的项
-                longPressTimer = setTimeout(() => {
-                    const rect = e.target.getBoundingClientRect();
-                    showContextMenu(rect.x, rect.y);
-                }, 500); // 长按 500ms 显示菜单
+                // 添加长按事件
+                itemElem.addEventListener("touchstart", (e) => {
+                    selectedItemIndex = index; // 记录被长按的项
+                    longPressTimer = setTimeout(() => {
+                        const rect = e.target.getBoundingClientRect();
+                        showContextMenu(rect.x, rect.y);
+                    }, 500); // 长按 500ms 显示菜单
+                });
+
+                itemElem.addEventListener("touchend", () => clearTimeout(longPressTimer));
+                itemElem.addEventListener("touchmove", () => clearTimeout(longPressTimer));
+
+                itemList.appendChild(itemElem);
             });
-
-            itemElem.addEventListener("touchend", () => clearTimeout(longPressTimer));
-            itemElem.addEventListener("touchmove", () => clearTimeout(longPressTimer));
-
-            itemList.appendChild(itemElem);
-        });
+        }
 
         // 更新总价格
         totalPriceElem.textContent = `¥ ${totalPrice.toFixed(2)}`;
     }
+
 
     // 菜单选项点击事件
     document.getElementById("edit-option").addEventListener("click", () => {
@@ -124,6 +135,17 @@ document.addEventListener("DOMContentLoaded", () => {
         sheet.classList.remove("show");
     });
 
+    // 清空商品列表的函数
+    // 清空商品列表的函数
+    clearListBtn.addEventListener('click', () => {
+        const confirmClear = window.confirm("确定要清空所有商品吗？");
+        if (confirmClear) {
+            shoppingList.length = 0; // 清空 shoppingList 数组
+            setShoppingListCookie(); // 同步到 Cookie
+            updateShoppingListDisplay(); // 更新购物车显示
+        }
+    });
+
     // 扫码功能
     scanItemBtn.addEventListener("click", () => {
         window.open("/scan.html", "scanWindow", "width=600,height=400"); // 打开扫码页面作为弹窗
@@ -134,9 +156,19 @@ document.addEventListener("DOMContentLoaded", () => {
         // 确保是来自扫码页面的消息
         if (event.origin === window.location.origin && event.data.barcode) {
             const barcode = event.data.barcode;
+            const goodsName = event.data.goodsName || ''; // 商品名称
+            const price = event.data.price || ''; // 商品价格
 
             // 填充条码字段
             document.getElementById("item-barcode").value = barcode;
+
+            // 如果有商品名称和价格，则也填充这些信息
+            if (goodsName) {
+                document.getElementById("item-name").value = goodsName;
+            }
+            if (price) {
+                document.getElementById("item-price").value = price;
+            }
 
             // 打开添加商品页面
             sheet.classList.add("show");

@@ -9,6 +9,10 @@ body {
     background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
     color: #333;
     overflow: hidden;
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none;    /* Firefox */
+    -ms-user-select: none;     /* Internet Explorer/Edge */
+    user-select: none;         /* Standard syntax */
 }
 
 .container {

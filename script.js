@@ -77,6 +77,9 @@ document.addEventListener("DOMContentLoaded", () => {
         totalPriceElem.textContent = `¥ ${totalPrice.toFixed(2)}`;
     }
 
+    document.addEventListener('contextmenu', (e) => {
+        e.preventDefault(); // 禁止右键菜单
+    });
 
     // 菜单选项点击事件
     document.getElementById("edit-option").addEventListener("click", () => {
@@ -133,9 +136,16 @@ document.addEventListener("DOMContentLoaded", () => {
     // 关闭添加商品页面
     closeSheetBtn.addEventListener("click", () => {
         sheet.classList.remove("show");
+        // 清空表单
+        document.getElementById("item-name").value = "";
+        document.getElementById("item-quantity").value = "1";
+        document.getElementById("item-price").value = "";
+        document.getElementById("item-barcode").value = ""; // 清空条码字段
+
+        // 清除编辑状态
+        selectedItemIndex = null;
     });
 
-    // 清空商品列表的函数
     // 清空商品列表的函数
     clearListBtn.addEventListener('click', () => {
         const confirmClear = window.confirm("确定要清空所有商品吗？");
@@ -175,7 +185,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // 添加商品到列表或更新商品
     submitItem.addEventListener("click", () => {
         const name = document.getElementById("item-name").value.trim();
         const quantity = parseFloat(document.getElementById("item-quantity").value);
@@ -217,6 +226,14 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("click", (e) => {
         if (e.target === sheet) {
             sheet.classList.remove("show");
+            // 清空表单
+            document.getElementById("item-name").value = "";
+            document.getElementById("item-quantity").value = "1";
+            document.getElementById("item-price").value = "";
+            document.getElementById("item-barcode").value = ""; // 清空条码字段
+
+            // 清除编辑状态
+            selectedItemIndex = null;
         }
     });
 

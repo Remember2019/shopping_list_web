@@ -104,14 +104,32 @@
 
         // 切换手电筒状态
         toggleFlashButton.addEventListener('click', () => {
-            if (track && track.getCapabilities().torch) {
-                isFlashOn = !isFlashOn;
-                track.applyConstraints({ advanced: [{ torch: isFlashOn }] });
-                toggleFlashButton.textContent = isFlashOn ? '关闭手电筒' : '打开手电筒';
+            if (track) {
+                const capabilities = track.getCapabilities(); // 获取视频轨道的能力
+
+                // 检查是否支持手电筒
+                if (capabilities && capabilities.torch !== undefined) {
+                    // 切换手电筒状态
+                    isFlashOn = !isFlashOn;
+
+                    track.applyConstraints({
+                        advanced: [{ torch: isFlashOn }]
+                    }).then(() => {
+                        // 更新按钮文本
+                        toggleFlashButton.textContent = isFlashOn ? '关闭手电筒' : '打开手电筒';
+                    }).catch((error) => {
+                        // 处理手电筒切换时的错误
+                        console.error('Failed to toggle torch:', error);
+                        alert('无法切换手电筒，可能是由于浏览器或设备限制');
+                    });
+                } else {
+                    alert('该设备或浏览器不支持手电筒功能');
+                }
             } else {
-                alert('该设备不支持手电筒功能');
+                alert('无法获取视频轨道');
             }
         });
+
 
         // 切换摄像头
         switchCameraButton.addEventListener('click', () => {

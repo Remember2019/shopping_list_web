@@ -66,6 +66,7 @@
     let currentStream;
     let currentCamera = 'user'; // 默认使用前置摄像头（'user'），后置摄像头为 'environment'
     let torchState = false; // 手电筒状态，默认关闭
+    let decoding = false; // 防止重复启动解码
 
     // 获取视频流并初始化摄像头
     async function initializeCamera() {
@@ -81,9 +82,29 @@
             currentStream = await navigator.mediaDevices.getUserMedia(constraints);
             const video = document.getElementById('video');
             video.srcObject = currentStream;
+
+            // 初始化扫码解码器
+            startScanning(); // 在获取视频流后开始扫码
         } catch (err) {
             console.error('获取视频流失败:', err);
         }
+    }
+
+    // 启动扫码解码
+    function startScanning() {
+        if (decoding) return; // 防止重复启动解码
+
+        decoding = true;
+        codeReader.decodeFromInputVideoDevice(undefined, 'video').then(result => {
+            resultElement.textContent = result.text; // 显示扫码结果
+
+            // 将扫码结果传回父页面并关闭扫码页面
+            window.opener.postMessage({ barcode: result.text }, '*'); // 发送数据到父页面
+            window.close(); // 关闭扫码页面
+        }).catch(err => {
+            console.error(err);
+            resultElement.textContent = '扫描失败，请重试';
+        });
     }
 
     // 切换摄像头
@@ -91,7 +112,7 @@
         const videoTracks = currentStream.getVideoTracks();
         videoTracks.forEach(track => track.stop()); // 停止当前摄像头
         currentCamera = currentCamera === 'user' ? 'environment' : 'user'; // 切换摄像头
-        initializeCamera(); // 重新初始化摄像头
+        initializeCamera(); // 重新初始化摄像头并重新启动扫码解码
     }
 
     // 控制手电筒开关
@@ -111,18 +132,6 @@
             torchBtn.textContent = torchState ? '关闭手电筒' : '打开手电筒';
         }
     }
-
-    // 扫码时的操作
-    codeReader.decodeFromInputVideoDevice(undefined, 'video').then(result => {
-        resultElement.textContent = result.text; // 显示扫码结果
-
-        // 将扫码结果传回父页面并关闭扫码页面
-        window.opener.postMessage({ barcode: result.text }, '*'); // 发送数据到父页面
-        window.close(); // 关闭扫码页面
-    }).catch(err => {
-        console.error(err);
-        resultElement.textContent = '扫描失败，请重试';
-    });
 
     // 初始化摄像头
     initializeCamera();

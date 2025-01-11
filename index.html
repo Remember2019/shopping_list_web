@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>购物清单 - iOS 风格</title>
+    <title>购物清单</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -50,12 +50,12 @@
     <!-- 商品列表 -->
     <div class="item-list" id="item-list">
         <p class="placeholder">您的购物清单为空</p>
-        <!-- 示例商品项 -->
-        <!-- <div class="item">
-            <span>商品名称 x 数量</span>
-            <span>¥ 总价</span>
-            <button class="delete-btn">删除</button>
-        </div> -->
+    </div>
+
+    <!-- 长按菜单 -->
+    <div id="context-menu" class="context-menu">
+        <div class="menu-option" id="edit-option">编辑</div>
+        <div class="menu-option" id="delete-option">删除</div>
     </div>
 </div>
 
@@ -71,6 +71,9 @@
 
         <label>单价</label>
         <input type="number" id="item-price" step="0.01" min="0" placeholder="输入单价">
+
+        <label for="item-barcode">条码</label>
+        <input type="text" id="item-barcode" placeholder="扫描条码" readonly />
 
         <button class="confirm-btn" id="submit-item">确认添加</button>
         <button class="close-btn" id="close-sheet-btn">取消</button>

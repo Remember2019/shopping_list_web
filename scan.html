@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>扫码</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f7f7f7;
+        }
+        #video {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            margin-bottom: 20px;
+            border: 1px solid black;
+        }
+        #controls {
+            margin: 20px;
+        }
+        .control-btn {
+            padding: 10px 15px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .control-btn:hover {
+            background-color: #555;
+        }
+        h1 {
+            margin-top: 20px;
+        }
+        #scan-result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<h1>扫描商品条码</h1>
+
+<!-- 扫码结果显示区域 -->
+<div id="scan-result"></div>
+
+<!-- 控制按钮 -->
+<div id="controls">
+    <button class="control-btn" id="torch-btn">打开手电筒</button>
+    <button class="control-btn" id="switch-camera-btn">切换摄像头</button>
+</div>
+
+<video id="video" width="300" height="300" style="border: 1px solid black;"></video>
+
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.18.3/umd/index.min.js"></script>
+<script>
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    const resultElement = document.getElementById('scan-result');
+    const torchBtn = document.getElementById('torch-btn');
+    const switchCameraBtn = document.getElementById('switch-camera-btn');
+    let currentStream;
+    let currentCamera = 'user'; // 默认使用前置摄像头（'user'），后置摄像头为 'environment'
+    let torchState = false; // 手电筒状态，默认关闭
+
+    // 获取视频流并初始化摄像头
+    async function initializeCamera() {
+        const constraints = {
+            video: {
+                facingMode: currentCamera, // 使用当前摄像头
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        };
+
+        try {
+            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+            const video = document.getElementById('video');
+            video.srcObject = currentStream;
+        } catch (err) {
+            console.error('获取视频流失败:', err);
+        }
+    }
+
+    // 切换摄像头
+    function switchCamera() {
+        const videoTracks = currentStream.getVideoTracks();
+        videoTracks.forEach(track => track.stop()); // 停止当前摄像头
+        currentCamera = currentCamera === 'user' ? 'environment' : 'user'; // 切换摄像头
+        initializeCamera(); // 重新初始化摄像头
+    }
+
+    // 控制手电筒开关
+    function toggleTorch() {
+        const videoTrack = currentStream.getVideoTracks()[0];
+        const capabilities = videoTrack.getCapabilities();
+
+        if (capabilities.torch) {
+            torchState = !torchState; // 切换手电筒状态
+
+            const settings = videoTrack.getSettings();
+            videoTrack.applyConstraints({
+                advanced: [{ torch: torchState }]
+            });
+
+            // 更新按钮文本
+            torchBtn.textContent = torchState ? '关闭手电筒' : '打开手电筒';
+        }
+    }
+
+    // 扫码时的操作
+    codeReader.decodeFromInputVideoDevice(undefined, 'video').then(result => {
+        resultElement.textContent = result.text; // 显示扫码结果
+
+        // 将扫码结果传回父页面并关闭扫码页面
+        window.opener.postMessage({ barcode: result.text }, '*'); // 发送数据到父页面
+        window.close(); // 关闭扫码页面
+    }).catch(err => {
+        console.error(err);
+        resultElement.textContent = '扫描失败，请重试';
+    });
+
+    // 初始化摄像头
+    initializeCamera();
+
+    // 绑定按钮事件
+    torchBtn.addEventListener('click', toggleTorch);
+    switchCameraBtn.addEventListener('click', switchCamera);
+</script>
+
+</body>
+</html>

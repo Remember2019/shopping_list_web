@@ -6,7 +6,7 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+    background: #f5f7fa linear-gradient(135deg, #f5f7fa, #c3cfe2);
     color: #333;
     overflow: hidden;
     -webkit-user-select: none; /* Safari */

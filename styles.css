@@ -64,6 +64,8 @@ body {
     display: flex;
     flex-direction: column;
     width: 105%;
+    max-height: 650px;
+    overflow-y: scroll;
 }
 /* 商品列表卡片样式 */
 .item {

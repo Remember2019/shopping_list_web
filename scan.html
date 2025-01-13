@@ -54,6 +54,32 @@
         let track = null;
         let isFlashOn = false;
 
+        video.addEventListener('click', (event) => {
+            if (track) {
+                const rect = video.getBoundingClientRect();
+                const x = (event.clientX - rect.left) / rect.width; // 计算点击位置的 x 比例
+                const y = (event.clientY - rect.top) / rect.height; // 计算点击位置的 y 比例
+
+                const capabilities = track.getCapabilities();
+                if (capabilities.focusMode && capabilities.focusMode.includes('manual')) {
+                    track.applyConstraints({
+                        advanced: [
+                            { focusMode: 'manual', pointsOfInterest: [{ x, y }] }
+                        ]
+                    }).then(() => {
+                        console.log(`对焦点已设置为: x=${x}, y=${y}`);
+                    }).catch((error) => {
+                        console.error('Failed to apply focus constraints:', error);
+                        alert('无法对焦，可能是由于设备或浏览器限制');
+                    });
+                } else {
+                    // alert('该设备不支持手动对焦');
+                    console.log('Device not supports manual focus.')
+                }
+            }
+        });
+
+
         // 启动摄像头并开始扫描
         async function startScanning() {
             try {

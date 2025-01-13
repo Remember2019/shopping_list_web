@@ -89,11 +89,17 @@
         let track = null;
         let isFlashOn = false;
 
-        // 获取所有媒体设备并过滤出摄像头
+        // 获取所有视频设备
         async function getVideoDevices() {
             try {
+                // 先请求用户授权摄像头
+                await navigator.mediaDevices.getUserMedia({ video: true });
+
+                // 然后获取设备列表
                 const allDevices = await navigator.mediaDevices.enumerateDevices();
                 devices = allDevices.filter(device => device.kind === 'videoinput');
+
+                // 检查是否存在视频设备
                 if (devices.length === 0) {
                     alert('没有找到可用的摄像头设备！');
                 } else {
@@ -148,8 +154,10 @@
                     stopScanning(); // 切换摄像头时先停止现有流
                 }
 
+                const deviceId = devices[currentCameraIndex] ? { exact: devices[currentCameraIndex].deviceId } : undefined;
+
                 stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: currentFacingMode }
+                    video: deviceId ? { deviceId: deviceId } : { facingMode: currentFacingMode }
                 });
                 video.srcObject = stream;
                 track = stream.getVideoTracks()[0];
@@ -261,5 +269,6 @@
         getVideoDevices().then(() => startScanning()); // 获取摄像头设备列表后启动扫描
     };
 </script>
+
 </body>
 </html>

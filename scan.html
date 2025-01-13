@@ -15,10 +15,18 @@
             margin: 0;
         }
 
+        .page {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            align-items: center;
+        }
+
         #container {
             position: relative;
             width: 100%;
             max-width: 500px;
+            min-height: 40vh;
         }
 
         video, #canvas {
@@ -33,6 +41,7 @@
             padding: 10px 20px;
             font-size: 16px;
             margin: 5px;
+            z-index: 2; /* 确保按钮在上层 */
         }
 
         #result {
@@ -47,15 +56,18 @@
     </style>
 </head>
 <body>
+<div class="page">
 <h1>扫描条码</h1>
-<video id="video" autoplay></video>
-<canvas id="canvas"></canvas>
+<div id="container">
+    <video id="video" autoplay></video>
+    <canvas id="canvas"></canvas>
+</div>
 <div>
     <button id="toggleFlashButton">打开手电筒</button>
     <button id="switchCameraButton">切换摄像头</button>
 </div>
 <p id="result">Result: <span></span></p>
-
+</div>
 <!-- 引入 ZXing.js -->
 <script src="https://unpkg.com/@zxing/library@latest"></script>
 <script>
@@ -68,9 +80,34 @@
         const resultElement = document.getElementById('result').querySelector('span');
         const codeReader = new ZXing.BrowserMultiFormatReader();
         let currentFacingMode = 'environment';
+        let currentCameraIndex = 0; // 当前选择的摄像头索引
+        let devices = [];  // 存储所有摄像头设备信息
         let stream = null;
         let track = null;
         let isFlashOn = false;
+
+        // 获取所有媒体设备并过滤出摄像头
+        async function getVideoDevices() {
+            try {
+                const allDevices = await navigator.mediaDevices.enumerateDevices();
+                devices = allDevices.filter(device => device.kind === 'videoinput');
+                if (devices.length === 0) {
+                    alert('没有找到可用的摄像头设备！');
+                } else {
+                    console.log('视频设备列表:', devices);
+                    updateCameraInfo();
+                }
+            } catch (error) {
+                console.error('获取设备列表失败:', error);
+                alert('无法访问设备，请检查权限设置。');
+            }
+        }
+
+        // 更新摄像头信息（显示当前摄像头）
+        function updateCameraInfo() {
+            const deviceName = devices[currentCameraIndex] ? devices[currentCameraIndex].label : '未知';
+            switchCameraButton.textContent = `切换摄像头: 当前使用 ${deviceName}`;
+        }
 
         // 调整 canvas 大小与视频同步
         function resizeCanvas() {
@@ -187,43 +224,10 @@
 
         // 切换摄像头
         switchCameraButton.addEventListener('click', () => {
-            currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-            startScanning(); // 重新启动扫描以切换摄像头
-        });
-
-        // 处理手动对焦
-        video.addEventListener('click', (event) => {
-            if (track) {
-                const rect = video.getBoundingClientRect();
-                const x = (event.clientX - rect.left) / rect.width; // 计算点击位置的 x 比例
-                const y = (event.clientY - rect.top) / rect.height; // 计算点击位置的 y 比例
-
-                const capabilities = track.getCapabilities();
-                if (capabilities.focusMode && capabilities.focusMode.includes('manual')) {
-                    track.applyConstraints({
-                        advanced: [
-                            { focusMode: 'manual', pointsOfInterest: [{ x, y }] }
-                        ]
-                    }).then(() => {
-                        console.log(`对焦点已设置为: x=${x}, y=${y}`);
-                    }).catch((error) => {
-                        console.error('Failed to apply focus constraints:', error);
-                        alert('无法对焦，可能是由于设备或浏览器限制');
-                    });
-                } else if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-                    // 如果设备不支持手动对焦，但支持自动对焦
-                    track.applyConstraints({
-                        advanced: [{ focusMode: 'continuous' }]
-                    }).then(() => {
-                        console.log('已切换为连续自动对焦模式');
-                    }).catch((error) => {
-                        console.error('Failed to apply continuous focus:', error);
-                    });
-                } else {
-                    alert('该设备不支持手动或自动对焦');
-                    console.log('Device does not support manual or continuous focus.');
-                }
-            }
+            // 更新当前摄像头索引
+            currentCameraIndex = (currentCameraIndex + 1) % devices.length;
+            updateCameraInfo();
+            startScanning();  // 重新启动扫描
         });
 
         // 调用API获取商品信息
@@ -251,7 +255,7 @@
         }
 
         // 自动启动扫描
-        startScanning();
+        getVideoDevices().then(() => startScanning()); // 获取摄像头设备列表后启动扫描
     };
 </script>
 </body>

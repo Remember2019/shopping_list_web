@@ -99,6 +99,17 @@
                 const allDevices = await navigator.mediaDevices.enumerateDevices();
                 devices = allDevices.filter(device => device.kind === 'videoinput');
 
+                // 如果找到包含"后置三镜头"的摄像头，则选择它
+                const preferredDevice = devices.find(device => device.label && device.label.includes("后置三镜头"));
+
+                if (preferredDevice) {
+                    // 找到后置三镜头设备
+                    currentCameraIndex = devices.indexOf(preferredDevice);
+                } else {
+                    // 如果没有找到后置三镜头，选择第一个可用的摄像头
+                    currentCameraIndex = 0;
+                }
+
                 // 检查是否存在视频设备
                 if (devices.length === 0) {
                     alert('没有找到可用的摄像头设备！');

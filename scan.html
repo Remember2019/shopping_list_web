@@ -14,26 +14,42 @@
             height: 100vh;
             margin: 0;
         }
-        video {
+
+        #container {
+            position: relative;
             width: 100%;
             max-width: 500px;
-            border: 1px solid #ccc;
-            margin-bottom: 10px;
         }
+
+        video, #canvas {
+            width: 100%;
+            height: auto;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
         button {
             padding: 10px 20px;
             font-size: 16px;
             margin: 5px;
         }
+
         #result {
             margin-top: 10px;
             font-size: 18px;
+        }
+
+        #canvas {
+            z-index: 1;
+            pointer-events: none; /* 禁止 canvas 拦截点击事件 */
         }
     </style>
 </head>
 <body>
 <h1>扫描条码</h1>
 <video id="video" autoplay></video>
+<canvas id="canvas"></canvas>
 <div>
     <button id="toggleFlashButton">打开手电筒</button>
     <button id="switchCameraButton">切换摄像头</button>
@@ -45,6 +61,8 @@
 <script>
     window.onload = async () => {
         const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
         const toggleFlashButton = document.getElementById('toggleFlashButton');
         const switchCameraButton = document.getElementById('switchCameraButton');
         const resultElement = document.getElementById('result').querySelector('span');
@@ -54,31 +72,34 @@
         let track = null;
         let isFlashOn = false;
 
-        video.addEventListener('click', (event) => {
-            if (track) {
-                const rect = video.getBoundingClientRect();
-                const x = (event.clientX - rect.left) / rect.width; // 计算点击位置的 x 比例
-                const y = (event.clientY - rect.top) / rect.height; // 计算点击位置的 y 比例
+        // 调整 canvas 大小与视频同步
+        function resizeCanvas() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+        }
 
-                const capabilities = track.getCapabilities();
-                if (capabilities.focusMode && capabilities.focusMode.includes('manual')) {
-                    track.applyConstraints({
-                        advanced: [
-                            { focusMode: 'manual', pointsOfInterest: [{ x, y }] }
-                        ]
-                    }).then(() => {
-                        console.log(`对焦点已设置为: x=${x}, y=${y}`);
-                    }).catch((error) => {
-                        console.error('Failed to apply focus constraints:', error);
-                        alert('无法对焦，可能是由于设备或浏览器限制');
-                    });
-                } else {
-                    alert('该设备不支持手动对焦');
-                    console.log('Device not supports manual focus.')
-                }
+        // 绘制标注框
+        function drawBoundingBox(result) {
+            context.clearRect(0, 0, canvas.width, canvas.height); // 清除上一帧标注框
+
+            if (result && result.getResultPoints) {
+                context.strokeStyle = 'red';
+                context.lineWidth = 2;
+
+                const points = result.getResultPoints();
+                const xMin = Math.min(...points.map(p => p.getX()));
+                const yMin = Math.min(...points.map(p => p.getY()));
+                const xMax = Math.max(...points.map(p => p.getX()));
+                const yMax = Math.max(...points.map(p => p.getY()));
+
+                context.strokeRect(xMin, yMin, xMax - xMin, yMax - yMin); // 绘制矩形框
+                context.font = '13px Arial';
+                context.fillStyle = 'red';
+                context.fillText('', xMin, yMin - 5);
+            } else {
+                console.log("未找到标注点信息，无法绘制边框");
             }
-        });
-
+        }
 
         // 启动摄像头并开始扫描
         async function startScanning() {
@@ -93,11 +114,18 @@
                 video.srcObject = stream;
                 track = stream.getVideoTracks()[0];
 
+                video.onloadedmetadata = () => {
+                    resizeCanvas();
+                };
+
                 // 实时扫描条码
                 codeReader.decodeFromVideoDevice(null, 'video', async (result, err) => {
                     if (result) {
                         resultElement.textContent = result.text;
                         console.log('Decoded text:', result.text);
+
+                        // 绘制标注框
+                        drawBoundingBox(result);
 
                         // 调用API获取商品信息
                         const productInfo = await fetchProductInfo(result.text);
@@ -125,6 +153,7 @@
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
+                context.clearRect(0, 0, canvas.width, canvas.height); // 停止扫描时清除标注框
             }
         }
 
@@ -156,11 +185,45 @@
             }
         });
 
-
         // 切换摄像头
         switchCameraButton.addEventListener('click', () => {
             currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
             startScanning(); // 重新启动扫描以切换摄像头
+        });
+
+        // 处理手动对焦
+        video.addEventListener('click', (event) => {
+            if (track) {
+                const rect = video.getBoundingClientRect();
+                const x = (event.clientX - rect.left) / rect.width; // 计算点击位置的 x 比例
+                const y = (event.clientY - rect.top) / rect.height; // 计算点击位置的 y 比例
+
+                const capabilities = track.getCapabilities();
+                if (capabilities.focusMode && capabilities.focusMode.includes('manual')) {
+                    track.applyConstraints({
+                        advanced: [
+                            { focusMode: 'manual', pointsOfInterest: [{ x, y }] }
+                        ]
+                    }).then(() => {
+                        console.log(`对焦点已设置为: x=${x}, y=${y}`);
+                    }).catch((error) => {
+                        console.error('Failed to apply focus constraints:', error);
+                        alert('无法对焦，可能是由于设备或浏览器限制');
+                    });
+                } else if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                    // 如果设备不支持手动对焦，但支持自动对焦
+                    track.applyConstraints({
+                        advanced: [{ focusMode: 'continuous' }]
+                    }).then(() => {
+                        console.log('已切换为连续自动对焦模式');
+                    }).catch((error) => {
+                        console.error('Failed to apply continuous focus:', error);
+                    });
+                } else {
+                    alert('该设备不支持手动或自动对焦');
+                    console.log('Device does not support manual or continuous focus.');
+                }
+            }
         });
 
         // 调用API获取商品信息

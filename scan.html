@@ -80,7 +80,6 @@
         const context = canvas.getContext('2d');
         const toggleFlashButton = document.getElementById('toggleFlashButton');
         const switchCameraButton = document.getElementById('switchCameraButton');
-        const cameraSelect = document.getElementById('cameraSelect');
         const resultElement = document.getElementById('result').querySelector('span');
         const codeReader = new ZXing.BrowserMultiFormatReader();
         let currentFacingMode = 'environment';
@@ -99,14 +98,6 @@
                 // 然后获取设备列表
                 const allDevices = await navigator.mediaDevices.enumerateDevices();
                 devices = allDevices.filter(device => device.kind === 'videoinput');
-
-                // 添加选项到摄像头选择菜单
-                devices.forEach((device, index) => {
-                    const option = document.createElement('option');
-                    option.value = index; // 选择的设备的索引
-                    option.textContent = device.label || `摄像头 ${index + 1}`;
-                    cameraSelect.appendChild(option);
-                });
 
                 // 如果找到包含"后置三镜头"的摄像头，则选择它
                 const preferredDevice = devices.find(device => device.label && device.label.includes("后置三镜头"));

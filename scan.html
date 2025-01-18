@@ -56,6 +56,15 @@
             z-index: 1;
             pointer-events: none; /* 禁止 canvas 拦截点击事件 */
         }
+
+        /* 下拉菜单样式 */
+        select {
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 16px;
+            position: relative;
+            z-index: 999;
+        }
     </style>
 </head>
 <body>
@@ -67,7 +76,10 @@
 </div>
 <div>
     <button id="toggleFlashButton">打开手电筒</button>
-    <button id="switchCameraButton">切换摄像头</button>
+    <button id="switchCameraButton" style="display: none">切换摄像头</button>
+    <select id="cameraSelect">
+        <option value="">请选择摄像头</option>
+    </select>
 </div>
 <p id="result">Result: <span></span></p>
 </div>
@@ -80,6 +92,7 @@
         const context = canvas.getContext('2d');
         const toggleFlashButton = document.getElementById('toggleFlashButton');
         const switchCameraButton = document.getElementById('switchCameraButton');
+        const cameraSelect = document.getElementById('cameraSelect');
         const resultElement = document.getElementById('result').querySelector('span');
         const codeReader = new ZXing.BrowserMultiFormatReader();
         let currentFacingMode = 'environment';
@@ -99,15 +112,25 @@
                 const allDevices = await navigator.mediaDevices.enumerateDevices();
                 devices = allDevices.filter(device => device.kind === 'videoinput');
 
+                // 添加选项到摄像头选择菜单
+                devices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = index; // 选择的设备的索引
+                    option.textContent = device.label || `摄像头 ${index + 1}`;
+                    cameraSelect.appendChild(option);
+                });
+
                 // 如果找到包含"后置三镜头"的摄像头，则选择它
                 const preferredDevice = devices.find(device => device.label && device.label.includes("后置三镜头"));
 
                 if (preferredDevice) {
                     // 找到后置三镜头设备
                     currentCameraIndex = devices.indexOf(preferredDevice);
+                    cameraSelect.selectedIndex = devices.indexOf(preferredDevice)+1;
                 } else {
                     // 如果没有找到后置三镜头，选择第一个可用的摄像头
                     currentCameraIndex = 0;
+                    cameraSelect.selectedIndex = 1;
                 }
 
                 // 检查是否存在视频设备

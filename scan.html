@@ -212,6 +212,9 @@
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
+                if (video.srcObject) {
+                    video.srcObject = null;  // 确保彻底清除视频流
+                }
                 context.clearRect(0, 0, canvas.width, canvas.height); // 停止扫描时清除标注框
             }
         }

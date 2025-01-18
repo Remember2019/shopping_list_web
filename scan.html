@@ -242,7 +242,6 @@
             }
         }
 
-        // 切换手电筒状态
         toggleFlashButton.addEventListener('click', () => {
             if (track) {
                 const capabilities = track.getCapabilities(); // 获取视频轨道的能力
@@ -255,8 +254,10 @@
                     track.applyConstraints({
                         advanced: [{ torch: isFlashOn }]
                     }).then(() => {
-                        // 更新按钮文本
-                        toggleFlashButton.textContent = isFlashOn ? '关闭手电筒' : '打开手电筒';
+                        // 更新按钮图标
+                        toggleFlashButton.innerHTML = isFlashOn
+                            ? '<i class="fas fa-lightbulb"></i>'
+                            : '<i class="fas fa-lightbulb" style="color: gray;"></i>';
                     }).catch((error) => {
                         // 处理手电筒切换时的错误
                         console.error('Failed to toggle torch:', error);

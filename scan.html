@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
     <title>扫描条码</title>
     <style>
         body {
@@ -56,20 +57,42 @@
             z-index: 1;
             pointer-events: none; /* 禁止 canvas 拦截点击事件 */
         }
+
+        /* 圆形手电筒图标按钮 */
+        .flash-icon {
+            background-color: #f1c40f;
+            width: 60px;
+            height: 60px;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            padding: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
 <div class="page">
-<h1>扫描条码</h1>
+<h1 style="display: none">扫描条码</h1>
 <div id="container">
     <video id="video" autoplay></video>
     <canvas id="canvas"></canvas>
 </div>
 <div>
-    <button id="toggleFlashButton">打开手电筒</button>
+    <!--<button id="toggleFlashButton">打开手电筒</button>-->
     <button id="switchCameraButton" style="display: none">切换摄像头</button>
 </div>
-<p id="result">Result: <span></span></p>
+    <div>
+        <!-- 使用 Font Awesome 图标作为手电筒图标 -->
+        <button id="toggleFlashButton" class="flash-icon">
+            <i class="fas fa-lightbulb"></i>
+        </button>
+    </div>
+<p id="result" style="display: none">Result: <span></span></p>
 </div>
 <!-- 引入 ZXing.js -->
 <script src="https://unpkg.com/@zxing/library@latest"></script>

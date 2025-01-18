@@ -56,15 +56,6 @@
             z-index: 1;
             pointer-events: none; /* 禁止 canvas 拦截点击事件 */
         }
-
-        /* 下拉菜单样式 */
-        select {
-            padding: 10px;
-            margin-top: 10px;
-            font-size: 16px;
-            position: relative;
-            z-index: 999;
-        }
     </style>
 </head>
 <body>
@@ -77,9 +68,6 @@
 <div>
     <button id="toggleFlashButton">打开手电筒</button>
     <button id="switchCameraButton" style="display: none">切换摄像头</button>
-    <select id="cameraSelect">
-        <option value="">请选择摄像头</option>
-    </select>
 </div>
 <p id="result">Result: <span></span></p>
 </div>
@@ -126,18 +114,10 @@
                 if (preferredDevice) {
                     // 找到后置三镜头设备
                     currentCameraIndex = devices.indexOf(preferredDevice);
-                    cameraSelect.selectedIndex = devices.indexOf(preferredDevice)+1;
                 } else {
                     // 如果没有找到后置三镜头，选择第一个可用的摄像头
                     currentCameraIndex = 0;
-                    cameraSelect.selectedIndex = 1;
                 }
-
-                // 切换摄像头选择时，重新启动扫描
-                cameraSelect.addEventListener('change', (event) => {
-                    const selectedIndex = event.target.value;
-                    startScanning(selectedIndex);
-                });
 
                 // 检查是否存在视频设备
                 if (devices.length === 0) {

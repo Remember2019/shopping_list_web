@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const addItemBtn = document.getElementById("add-item-btn");
     const scanItemBtn = document.getElementById("scan-item-btn");
     const closeSheetBtn = document.getElementById("close-sheet-btn");
+    const hintText = document.getElementById("hint-text");
     const clearListBtn = document.getElementById('clear-list-btn');
     const sheet = document.getElementById("add-item-sheet");
     const submitItem = document.getElementById("submit-item");
@@ -154,6 +155,26 @@ document.addEventListener("DOMContentLoaded", () => {
             setShoppingListCookie(); // 同步到 Cookie
             updateShoppingListDisplay(); // 更新购物车显示
         }
+    });
+
+    // 一键添加样例商品以供调试
+    hintText.addEventListener('click', () => {
+        console.log('123');
+        const names = ['商品1','商品2','商品3','商品4'];
+        const quantities = [2,6.7,3,1.7];
+        const prices = [1.23,5.2,0.9,15.2];
+        const barcodes = ['','','',''];
+        for (let i = 0; i < names.length; i++) {
+            const item = {
+                name: names[i],
+                quantity: quantities[i],
+                price: prices[i],
+                barcode: barcodes[i]
+            };
+            shoppingList.push(item);
+        }
+        setShoppingListCookie();
+        updateShoppingListDisplay();
     });
 
     // 扫码功能

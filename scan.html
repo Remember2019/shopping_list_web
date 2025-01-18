@@ -133,6 +133,12 @@
                     cameraSelect.selectedIndex = 1;
                 }
 
+                // 切换摄像头选择时，重新启动扫描
+                cameraSelect.addEventListener('change', (event) => {
+                    const selectedIndex = event.target.value;
+                    startScanning(selectedIndex);
+                });
+
                 // 检查是否存在视频设备
                 if (devices.length === 0) {
                     alert('没有找到可用的摄像头设备！');

@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
-    <title>扫描条码</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用 Vue-Qrcode-Reader 扫码</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.45/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-qrcode-reader/dist/vue-qrcode-reader.umd.min.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,49 +18,13 @@
             margin: 0;
         }
 
-        .page {
+        #app {
             display: flex;
             flex-direction: column;
-            width: 100%;
-            height: 100vh;
             align-items: center;
-        }
-
-        #container {
-            position: relative;
             width: 100%;
-            max-width: 500px;
-            min-height: 50vh;
         }
 
-        video, #canvas {
-            width: 100%;
-            height: auto;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        button {
-            padding: 10px 20px;
-            position: relative;
-            font-size: 16px;
-            margin: 5px;
-            z-index: 2; /* 确保按钮在上层 */
-        }
-
-        #result {
-            margin-top: 10px;
-            font-size: 18px;
-            z-index: 2;
-        }
-
-        #canvas {
-            z-index: 1;
-            pointer-events: none; /* 禁止 canvas 拦截点击事件 */
-        }
-
-        /* 圆形手电筒图标按钮 */
         .flash-icon {
             background-color: #f1c40f;
             width: 60px;
@@ -71,242 +37,134 @@
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             transition: background-color 0.3s ease;
-            z-index: 2;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-<div class="page">
-<h1 style="display: none">扫描条码</h1>
-<div id="container">
-    <video id="video" autoplay></video>
-    <canvas id="canvas"></canvas>
+<div id="app">
+    <h1>扫描条码</h1>
+    <qrcode-stream
+            :formats="['qr_code', 'code_128', 'ean_13', 'upc_a']"
+            :torch="flashOn"
+            @detect="onDetect"
+            @camera-on="onCameraOn"
+            @error="onError"
+    >
+    </qrcode-stream>
+    <p v-if="error" style="color: red;">{{ error }}</p>
+    <p v-if="result">扫码结果: {{ result }}</p>
+    <button v-if="result" @click="closePage">完成并返回</button>
+    <button v-else @click="toggleFlash" class="flash-icon">
+        <i :class="flashOn ? 'fas fa-lightbulb' : 'fas fa-lightbulb text-muted'"></i>
+    </button>
 </div>
-<div>
-    <!--<button id="toggleFlashButton">打开手电筒</button>-->
-    <button id="switchCameraButton" style="display: none">切换摄像头</button>
-</div>
-    <div>
-        <!-- 使用 Font Awesome 图标作为手电筒图标 -->
-        <button id="toggleFlashButton" class="flash-icon">
-            <i class="fas fa-lightbulb"></i>
-        </button>
-    </div>
-<p id="result" style="display: none">Result: <span></span></p>
-</div>
-<!-- 引入 ZXing.js -->
-<script src="https://unpkg.com/@zxing/library@latest"></script>
+
 <script>
-    window.onload = async () => {
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const context = canvas.getContext('2d');
-        const toggleFlashButton = document.getElementById('toggleFlashButton');
-        const switchCameraButton = document.getElementById('switchCameraButton');
-        const resultElement = document.getElementById('result').querySelector('span');
-        const codeReader = new ZXing.BrowserMultiFormatReader();
-        let currentFacingMode = 'environment';
-        let currentCameraIndex = 0; // 当前选择的摄像头索引
-        let devices = [];  // 存储所有摄像头设备信息
-        let stream = null;
-        let track = null;
-        let isFlashOn = false;
+    const { createApp } = Vue;
+    const { QrcodeStream } = VueQrcodeReader;
 
-        // 获取所有视频设备
-        async function getVideoDevices() {
-            try {
-                // 先请求用户授权摄像头
-                await navigator.mediaDevices.getUserMedia({ video: true });
+    createApp({
+        components: {
+            QrcodeStream
+        },
+        data() {
+            return {
+                result: null,
+                error: null,
+                flashOn: false,  // 控制闪光灯状态
+                torchSupported: false  // 检测设备是否支持闪光灯
+            };
+        },
+        methods: {
+            onDetect(detectedCodes) {
+                if (detectedCodes.length > 0) {
+                    const detectedCode = detectedCodes[0];  // 获取第一个扫码结果
+                    this.result = detectedCode.rawValue; // 获取扫码内容
+                    console.log('Detected:', detectedCode.rawValue);
 
-                // 然后获取设备列表
-                const allDevices = await navigator.mediaDevices.enumerateDevices();
-                devices = allDevices.filter(device => device.kind === 'videoinput');
-
-                // 如果找到包含"后置三镜头"的摄像头，则选择它
-                const preferredDevice = devices.find(device => device.label && device.label.includes("后置三镜头"));
-
-                if (preferredDevice) {
-                    // 找到后置三镜头设备
-                    currentCameraIndex = devices.indexOf(preferredDevice);
-                } else {
-                    // 如果没有找到后置三镜头，选择第一个可用的摄像头
-                    currentCameraIndex = 0;
-                }
-
-                // 检查是否存在视频设备
-                if (devices.length === 0) {
-                    alert('没有找到可用的摄像头设备！');
-                } else {
-                    console.log('视频设备列表:', devices);
-                    updateCameraInfo();
-                }
-            } catch (error) {
-                console.error('获取设备列表失败:', error);
-                alert('无法访问设备，请检查权限设置。');
-            }
-        }
-
-        // 更新摄像头信息（显示当前摄像头）
-        function updateCameraInfo() {
-            const deviceName = devices[currentCameraIndex] ? devices[currentCameraIndex].label : '未知';
-            switchCameraButton.textContent = `切换摄像头: 当前使用 ${deviceName}`;
-        }
-
-        // 调整 canvas 大小与视频同步
-        function resizeCanvas() {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-        }
-
-        // 绘制标注框
-        function drawBoundingBox(result) {
-            context.clearRect(0, 0, canvas.width, canvas.height); // 清除上一帧标注框
-
-            if (result && result.getResultPoints) {
-                context.strokeStyle = 'red';
-                context.lineWidth = 2;
-
-                const points = result.getResultPoints();
-                const xMin = Math.min(...points.map(p => p.getX()));
-                const yMin = Math.min(...points.map(p => p.getY()));
-                const xMax = Math.max(...points.map(p => p.getX()));
-                const yMax = Math.max(...points.map(p => p.getY()));
-
-                context.strokeRect(xMin, yMin, xMax - xMin, yMax - yMin); // 绘制矩形框
-                context.font = '13px Arial';
-                context.fillStyle = 'red';
-                context.fillText('', xMin, yMin - 5);
-            } else {
-                console.log("未找到标注点信息，无法绘制边框");
-            }
-        }
-
-        // 启动摄像头并开始扫描
-        async function startScanning() {
-            try {
-                if (stream) {
-                    stopScanning(); // 切换摄像头时先停止现有流
-                }
-
-                const deviceId = devices[currentCameraIndex] ? { exact: devices[currentCameraIndex].deviceId } : undefined;
-
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: deviceId ? { deviceId: deviceId } : { facingMode: currentFacingMode }
-                });
-                video.srcObject = stream;
-                track = stream.getVideoTracks()[0];
-
-                video.onloadedmetadata = () => {
-                    resizeCanvas();
-                };
-
-                // 实时扫描条码
-                codeReader.decodeFromVideoDevice(null, 'video', async (result, err) => {
-                    if (result) {
-                        resultElement.textContent = result.text;
-                        console.log('Decoded text:', result.text);
-
-                        // 绘制标注框
-                        drawBoundingBox(result);
-
-                        // 调用API获取商品信息
-                        const productInfo = await fetchProductInfo(result.text);
-                        if (productInfo) {
-                            resultElement.textContent = `商品名称: ${productInfo.goodsName}, 单价: ${productInfo.price}`;
-                        }
-
-                        // 将扫码结果传回父页面并关闭当前页面
-                        window.opener.postMessage({ barcode: result.text, goodsName: productInfo.goodsName, price: productInfo.price }, '*');
-                        stopScanning();
-                        window.close();
-                    }
-                    if (err && !(err instanceof ZXing.NotFoundException)) {
-                        console.error(err);
-                    }
-                });
-            } catch (error) {
-                console.error('Error accessing media devices.', error);
-                alert('无法访问摄像头，请检查设备权限设置。');
-            }
-        }
-
-        // 停止摄像头
-        function stopScanning() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-                if (video.srcObject) {
-                    video.srcObject = null;  // 确保彻底清除视频流
-                }
-                context.clearRect(0, 0, canvas.width, canvas.height); // 停止扫描时清除标注框
-            }
-        }
-
-        toggleFlashButton.addEventListener('click', () => {
-            if (track) {
-                const capabilities = track.getCapabilities(); // 获取视频轨道的能力
-
-                // 检查是否支持手电筒
-                if (capabilities && capabilities.torch !== undefined) {
-                    // 切换手电筒状态
-                    isFlashOn = !isFlashOn;
-
-                    track.applyConstraints({
-                        advanced: [{ torch: isFlashOn }]
-                    }).then(() => {
-                        // 更新按钮图标
-                        toggleFlashButton.innerHTML = isFlashOn
-                            ? '<i class="fas fa-lightbulb"></i>'
-                            : '<i class="fas fa-lightbulb" style="color: gray;"></i>';
-                    }).catch((error) => {
-                        // 处理手电筒切换时的错误
-                        console.error('Failed to toggle torch:', error);
-                        alert('无法切换手电筒，可能是由于浏览器或设备限制');
+                    // 模拟商品信息请求
+                    this.fetchProductInfo(this.result).then(productInfo => {
+                        const message = {
+                            barcode: detectedCode.rawValue,
+                            goodsName: productInfo.goodsName || '',
+                            price: productInfo.price || ''
+                        };
+                        // 传递给父页面
+                        window.opener?.postMessage(message, '*');
+                        this.closePage();
                     });
-                } else {
-                    alert('该设备或浏览器不支持手电筒功能');
                 }
-            } else {
-                alert('无法获取视频轨道');
-            }
-        });
+            },
 
-        // 切换摄像头
-        switchCameraButton.addEventListener('click', () => {
-            // 更新当前摄像头索引
-            currentCameraIndex = (currentCameraIndex + 1) % devices.length;
-            updateCameraInfo();
-            startScanning();  // 重新启动扫描
-        });
+            // 摄像头已准备好
+            onCameraOn(capabilities) {
+                console.log('Camera is ready:', capabilities);
+                // 检查设备是否支持闪光灯
+                this.torchSupported = !!capabilities.torch;
+                console.log('Torch supported:', this.torchSupported);
+            },
 
-        // 调用API获取商品信息
-        async function fetchProductInfo(barcode) {
-            const appId = '1y9qomhkrojpgnid';
-            const appSecret = 'dWM72BIOZ3EOA3yVgOXGfsSCvv8rwUsC';
-            const url = `https://www.mxnzp.com/api/barcode/goods/details?barcode=${barcode}&app_id=${appId}&app_secret=${appSecret}`;
-
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-
-                if (data.code === 1) {
-                    return {
-                        goodsName: data.data.goodsName,
-                        price: data.data.price
-                    };
-                } else {
-                    return { barcode: barcode }; // 如果未找到商品，返回条码
+            // 错误处理
+            onError(error) {
+                if (error.name === 'NotAllowedError') {
+                    this.error = '用户拒绝了摄像头权限';
+                } else if (error.name === 'NotFoundError') {
+                    this.error = '未找到合适的摄像头设备';
+                } else if (error.name === 'NotSupportedError') {
+                    this.error = '页面未通过 HTTPS 提供服务';
+                } else if (error.name === 'NotReadableError') {
+                    this.error = '摄像头可能正在使用中';
+                } else if (error.name === 'OverconstrainedError') {
+                    this.error = '请求的摄像头类型不支持';
+                } else if (error.name === 'StreamApiNotSupportedError') {
+                    this.error = '浏览器不支持摄像头流 API';
                 }
-            } catch (error) {
-                console.error('Error fetching product info:', error);
-                return { barcode: barcode }; // 如果API请求失败，返回条码
+                console.error(error);
+            },
+
+            // 切换闪光灯
+            toggleFlash() {
+                if (this.torchSupported) {
+                    this.flashOn = !this.flashOn; // 只有在设备支持的情况下才能切换闪光灯
+                    console.log(`Flash is now ${this.flashOn ? 'on' : 'off'}`);
+                } else {
+                    console.log('设备不支持闪光灯');
+                }
+            },
+
+            // 获取商品信息
+            fetchProductInfo(barcode) {
+                const appId = '1y9qomhkrojpgnid';
+                const appSecret = 'dWM72BIOZ3EOA3yVgOXGfsSCvv8rwUsC';
+                const url = `https://www.mxnzp.com/api/barcode/goods/details?barcode=${barcode}&app_id=${appId}&app_secret=${appSecret}`;
+
+                return fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.code === 1) {
+                            return {
+                                goodsName: data.data.goodsName,
+                                price: data.data.price
+                            };
+                        }
+                        return { goodsName: '', price: '' };
+                    })
+                    .catch(err => {
+                        console.error('Error fetching product info:', err);
+                        return { goodsName: '', price: '' };
+                    });
+            },
+
+            // 关闭页面
+            closePage() {
+                window.close();
             }
         }
-
-        // 自动启动扫描
-        getVideoDevices().then(() => startScanning()); // 获取摄像头设备列表后启动扫描
-    };
+    }).mount('#app');
 </script>
 
+<!-- 引入 Font Awesome 图标 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
 </body>
 </html>

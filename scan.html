@@ -45,7 +45,7 @@
 <div id="app">
     <h1>扫描条码</h1>
     <qrcode-stream
-            :formats="['qr_code', 'code_128', 'ean_13', 'upc_a']"
+            :formats="['code_128', 'ean_13', 'upc_a']"
             :torch="flashOn"
             @detect="onDetect"
             @camera-on="onCameraOn"

@@ -110,23 +110,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 获取购物清单
     function getShoppingListFromCookie() {
-        const cookieName = "shoppingList=";
-        const decodedCookie = decodeURIComponent(document.cookie);
-        const cookieArray = decodedCookie.split(';');
-
-        for (let i = 0; i < cookieArray.length; i++) {
-            let c = cookieArray[i].trim();
-            if (c.indexOf(cookieName) === 0) {
-                return JSON.parse(c.substring(cookieName.length));
-            }
+        const shoppingListJson = localStorage.getItem('shoppingList');
+        if (shoppingListJson) {
+            return JSON.parse(shoppingListJson);
         }
-        return [];
+        return []; // 如果没有存储购物清单，返回空数组
     }
 
     // 设置购物清单到 Cookie
     function setShoppingListCookie() {
         const shoppingListJson = JSON.stringify(shoppingList);
-        document.cookie = `shoppingList=${encodeURIComponent(shoppingListJson)}; path=/; max-age=${60 * 60 * 24 * 365}`;
+        localStorage.setItem('shoppingList', shoppingListJson);
     }
 
     // 打开添加商品页面

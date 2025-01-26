@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 隐藏长按菜单
     function hideContextMenu() {
+        selectedItemIndex = null;
         contextMenu.style.display = "none";
     }
 
@@ -58,22 +59,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 <span class="item-price">¥ ${total.toFixed(2)}</span>
             `;
 
-                // 添加长按事件
-                itemElem.addEventListener("touchstart", (e) => {
-                    selectedItemIndex = index; // 记录被长按的项
-                    longPressTimer = setTimeout(() => {
-                        const rect = e.target.getBoundingClientRect();
-                        showContextMenu(rect.x, rect.y);
-                    }, 500); // 长按 500ms 显示菜单
-                });
-
-                itemElem.addEventListener("touchend", () => {
-                    clearTimeout(longPressTimer);
-                    selectedItemIndex = null; // 长按取消时重置选中的项
-                });
-                itemElem.addEventListener("touchmove", () => {
-                    clearTimeout(longPressTimer); // 用户滑动时取消长按操作
-                    selectedItemIndex = null;     // 取消长按时重置选中的项
+                itemElem.addEventListener("click", (e) => {
+                    selectedItemIndex = index; // 记录被点击的项
+                    const rect = e.target.getBoundingClientRect();
+                    showContextMenu(rect.x, rect.y); // 显示菜单
                 });
 
                 itemList.appendChild(itemElem);
@@ -103,7 +92,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("delete-option").addEventListener("click", () => {
         if (selectedItemIndex !== null) {
-            // 删除选中的商品并同步到 Cookie
             shoppingList.splice(selectedItemIndex, 1);
             setShoppingListCookie();
             updateShoppingListDisplay();

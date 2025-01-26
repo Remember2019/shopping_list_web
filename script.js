@@ -67,8 +67,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     }, 500); // 长按 500ms 显示菜单
                 });
 
-                itemElem.addEventListener("touchend", () => clearTimeout(longPressTimer));
-                itemElem.addEventListener("touchmove", () => clearTimeout(longPressTimer));
+                itemElem.addEventListener("touchend", () => {
+                    clearTimeout(longPressTimer);
+                    selectedItemIndex = null; // 长按取消时重置选中的项
+                });
+                itemElem.addEventListener("touchmove", () => {
+                    clearTimeout(longPressTimer); // 用户滑动时取消长按操作
+                    selectedItemIndex = null;     // 取消长按时重置选中的项
+                });
 
                 itemList.appendChild(itemElem);
             });

@@ -205,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const quantity = parseFloat(document.getElementById("item-quantity").value);
         const price = parseFloat(document.getElementById("item-price").value);
         const barcode = document.getElementById("item-barcode").value.trim(); // 获取条码
-
+        alert(selectedItemIndex);
         if (name && quantity > 0 && price >= 0) {
             if (selectedItemIndex !== null) {
                 // 如果正在编辑，更新商品信息

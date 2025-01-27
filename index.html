@@ -280,6 +280,7 @@
                         if (productInfo) {
                             form.name = productInfo.goodsName;
                             form.price = parseFloat(productInfo.price);
+                            form.quantity = parseFloat(productInfo.quantity);
                         }
                     });
                     stopScan();
@@ -298,45 +299,51 @@
                 console.log('停止扫码');
             }
 
-            function fetchProductInfo(barcode) {
+            async function fetchProductInfo(barcode) {
                 if (barcode.length === 13) {
                     if (barcode[0] === '2') {
                         return {
                             goodsName: '电子秤' + barcode.substring(2, 7),
-                            price: parseFloat(barcode.substring(7, 12)) / 100
-                        }
+                            price: parseFloat(barcode.substring(7, 12)) / 100,
+                            quantity: 1
+                        };
                     } else {
                         const appId = '1y9qomhkrojpgnid';
                         const appSecret = 'dWM72BIOZ3EOA3yVgOXGfsSCvv8rwUsC';
                         const url = `https://www.mxnzp.com/api/barcode/goods/details?barcode=${barcode}&app_id=${appId}&app_secret=${appSecret}`;
 
-                        return fetch(url)
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.code === 1) {
-                                    return {
-                                        goodsName: data.data.goodsName,
-                                        price: data.data.price,
-                                    };
-                                }
-                                return {goodsName: '', price: 0.0};
-                            })
-                            .catch(err => {
-                                console.error('Error fetching product info:', err);
-                                return {goodsName: '', price: 0.0};
-                            });
+                        try {
+                            const response = await fetch(url);
+                            const data = await response.json();
+                            if (data.code === 1) {
+                                return {
+                                    goodsName: data.data.goodsName,
+                                    price: data.data.price,
+                                    quantity: 1
+                                };
+                            }
+                            return { goodsName: '', price: 0.0, quantity: 1 };  // 如果未找到商品信息，返回空数据
+                        } catch (err) {
+                            console.error('Error fetching product info:', err);
+                            return { goodsName: '', price: 0.0, quantity: 1 };  // 捕获错误时返回空数据
+                        }
                     }
                 } else {
-                    if (barcode[0] === '2') {
+                    if (barcode.length === 18 && barcode[0] === '2') {
+                        // 27 23242 03000 00150 5
+                        console.log(barcode)
+                        const sum_price = parseFloat(barcode.substring(7,12)) / 100;
+                        const quantity = parseFloat(barcode.substring(12,17)) / 1000;
+                        console.log(quantity);
                         return {
-                            goodsName: '电子秤',
-                            price: 0.0,
-                        }
+                            goodsName: '电子秤' + barcode.substring(2,7),
+                            price: sum_price / quantity,
+                            quantity: quantity,
+                        };
                     } else {
-                        return {goodsName: '', price: 0.0};
+                        return { goodsName: '', price: 0.0, quantity: 1 };  // 如果未找到商品信息，返回空数据
                     }
                 }
-
             }
 
             function handleRowClick(row) {

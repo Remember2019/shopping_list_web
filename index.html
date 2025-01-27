@@ -4,89 +4,384 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>购物清单</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css" type="text/css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.3.3/dist/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.45/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus@2.3.3/dist/index.full.js"></script>
+    <script src="https://unpkg.com/element-plus@2.8.1/dist/locale/zh-cn.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/@element-plus/icons-vue"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-qrcode-reader/dist/vue-qrcode-reader.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
     <link rel="manifest" href="/manifest.json">
 </head>
+
 <body>
-
-<div class="container">
-    <!-- 菜单栏 -->
+<div id="app" class="container">
     <div class="menu-bar">
-        <!-- 添加按钮与扫码按钮 -->
         <div class="actions">
-            <button class="action-btn" id="add-item-btn">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-            <button class="action-btn" id="scan-item-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                    <!-- 左上角的内直角拐角 -->
-                    <path d="M6,2 H2 V6" stroke="currentColor" stroke-width="2" fill="none"></path>
-
-                    <!-- 右上角的内直角拐角 -->
-                    <path d="M18,2 H22 V6" stroke="currentColor" stroke-width="2" fill="none"></path>
-
-                    <!-- 右下角的内直角拐角 -->
-                    <path d="M22,18 V22 H18" stroke="currentColor" stroke-width="2" fill="none"></path>
-
-                    <!-- 左下角的内直角拐角 -->
-                    <path d="M2,18 V22 H6" stroke="currentColor" stroke-width="2" fill="none"></path>
-
-                    <!-- 中间的三条细竖线 -->
-                    <path d="M9,6 V18" stroke="currentColor" stroke-width="2"></path>
-                    <path d="M12,6 V18" stroke="currentColor" stroke-width="2"></path>
-                    <path d="M15,6 V18" stroke="currentColor" stroke-width="2"></path>
-                </svg>
-            </button>
-            <button class="action-btn" id="clear-list-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-                    <path d="M6 6h12M6 6l2 14h8l2-14H6z" fill="none" stroke="currentColor" stroke-width="2"/>
-                </svg>
-            </button>
+            <el-button link type="primary" class="action-btn" @click="showAddDialog">
+                <el-icon size="23">
+                    <Plus />
+                </el-icon>
+            </el-button>
+            <el-button link type="primary" class="action-btn" @click="showScanDialog">
+                <el-icon size="23">
+                    <Camera />
+                </el-icon>
+            </el-button>
+            <el-button link type="danger" class="action-btn" @click="cleanList">
+                <el-icon size="23">
+                    <Delete />
+                </el-icon>
+            </el-button>
         </div>
     </div>
 
-    <!-- 总价格卡片 -->
-    <div class="total-card">
+    <el-card shadow="never" class="total-card">
         <h1 id="hint-text">总价格</h1>
-        <p id="total-price">¥ 0.00</p>
-    </div>
+        <el-statistic :value="totalPrice" :precision="2" @click="updatePrice"
+                      group-separator="," decimal-separator="." prefix="¥">
+        </el-statistic>
+    </el-card>
 
-    <!-- 商品列表 -->
     <div class="item-list" id="item-list">
-        <p class="placeholder">您的购物清单为空</p>
+        <div v-if="shoppingList.length === 0" class="placeholder">您的购物清单为空</div>
+    </div>
+    <div class="item-list">
+    <el-table v-if="shoppingList.length !== 0" :data="shoppingList" style="width: 100%" height="70vh"
+              @row-click="handleRowClick">
+        <el-table-column label="商品" width="250">
+            <template #default="scope">
+                <div style="display: flex; align-items: center;">
+                    <el-avatar
+                            :style="{ backgroundColor: getAvatarColor() , color: '#fff', marginRight: '10px' }"
+                    >
+                        {{ scope.row.name.charAt(0) }}
+                    </el-avatar>
+                    <div class="item-info">
+                        <span class="item-name">{{ scope.row.name }}</span>
+                        <span class="item-quantity">× {{ scope.row.quantity }}</span>
+                    </div>
+                </div>
+            </template>
+        </el-table-column>
+        <el-table-column label="售价" width="120">
+            <template #default="scope">
+                <div style="align-items: center; justify-content: end; display: flex;">
+                    <span class="item-price">
+                        ¥{{ (scope.row.quantity * scope.row.price).toFixed(2) }}
+                    </span>
+                </div>
+            </template>
+        </el-table-column>
+    </el-table>
     </div>
 
-    <!-- 长按菜单 -->
-    <div id="context-menu" class="context-menu">
-        <div class="menu-option" id="edit-option">编辑</div>
-        <div class="menu-option" id="delete-option">删除</div>
+    <div class="add-dialog">
+        <el-dialog :title="dialogTitle" v-model="dialogVisible" :fullscreen="true"
+                   @close="resetForm">
+            <el-form :model="form">
+                <el-form-item label="商品名称"
+                              :rules="[{ required: true, message: '请输入商品名称', trigger: 'blur' }]">
+                    <el-input v-model="form.name"></el-input>
+                </el-form-item>
+                <el-form-item label="数量" :rules="[{ required: true, message: '请输入数量', trigger: 'blur' }]">
+                    <el-input-number v-model="form.quantity" :min="0"></el-input-number>
+                </el-form-item>
+                <el-form-item label="单价" :rules="[{ required: true, message: '请输入商品单价', trigger: 'blur' }]">
+                    <el-input-number v-model="form.price" :min="0"></el-input-number>
+                </el-form-item>
+                <el-form-item label="条码">
+                    <div style="display: flex; flex-direction: row; margin-bottom: 10px">
+                        <el-input v-model="form.barcode" placeholder="请扫描商品条码"
+                                  readonly style="margin-right: 5px; width: 60vw"></el-input>
+                        <el-button type="primary" @click="startScan">扫描条码</el-button>
+                    </div>
+                    <!-- 扫码区域 -->
+                    <div v-if="isScanning" style="width: 100%; height: 300px; position: relative; display: flex; flex-direction: column">
+                        <qrcode-stream :paused="isPaused" :formats="['code_128', 'ean_13', 'upc_a']" @detect="onDetect"
+                                       @camera-on="onReady" @error="onError" :torch="flashOn"></qrcode-stream>
+                        <el-button @click="toggleFlash" type="primary" style="margin-top: 10px">手电筒</el-button>
+                    </div>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="resetForm">取消</el-button>
+                <el-button type="primary" @click="submitForm">确认</el-button>
+            </template>
+        </el-dialog>
     </div>
 </div>
 
-<!-- 底部滑入页面 -->
-<div id="add-item-sheet" class="sheet">
-    <div class="sheet-content">
-        <h3>添加商品</h3>
-        <label>商品名称</label>
-        <input type="text" id="item-name" placeholder="输入商品名称">
+<script>
+    const { createApp, ref, reactive, onMounted, computed } = Vue;
+    const { ElMessage, ElMessageBox } = ElementPlus;
+    const { QrcodeStream } = window.VueQrcodeReader;
+    const app = createApp({
+        setup() {
+            const totalPrice = ref(0);
+            const currentIndex = ref(0);
+            const shoppingList = reactive([]);
+            const dialogVisible = ref(false);
+            const dialogTitle = ref('添加商品');
+            const isEditing = ref(false);
+            const isScanning = ref(false);
+            const isPaused = ref(false);
+            const flashOn = ref(false);
+            const form = reactive({
+                name: '',
+                quantity: 1,
+                price: 0.00,
+                barcode: '',
+            })
 
-        <label>数量</label>
-        <input type="number" id="item-quantity" min="1" value="1">
+            function showAddDialog() {
+                dialogTitle.value = '添加商品';
+                isEditing.value = false;
+                dialogVisible.value = true;
+            }
 
-        <label>单价</label>
-        <input type="number" id="item-price" step="0.01" min="0" placeholder="输入单价">
+            function showEditDialog(item, index) {
+                dialogTitle.value = '编辑商品';
+                isEditing.value = true;
+                currentIndex.value = index;
+                form.name = item.name;
+                form.quantity = item.quantity;
+                form.price = item.price;
+                form.barcode = item.barcode;
+                dialogVisible.value = true;
+            }
 
-        <label for="item-barcode">条码</label>
-        <input type="text" id="item-barcode" placeholder="扫描条码" readonly />
+            function getShoppingListFromLocalStorage() {
+                const shoppingListJson = localStorage.getItem('shoppingList');
+                if (shoppingListJson) {
+                    return JSON.parse(shoppingListJson); // 如果存在，返回解析后的购物清单
+                }
+                return []; // 如果没有存储购物清单，返回空数组
+            }
 
-        <button class="confirm-btn" id="submit-item">确认添加</button>
-        <button class="close-btn" id="close-sheet-btn">取消</button>
-    </div>
-</div>
+            function setShoppingListToLocalStorage() {
+                const shoppingListJson = JSON.stringify(shoppingList); // 将购物清单转换为 JSON 字符串
+                localStorage.setItem('shoppingList', shoppingListJson); // 存储到 localStorage
+            }
 
-<script src="script.js"></script>
+            function updatePrice() {
+                totalPrice.value = 0;
+                shoppingList.forEach(item => {
+                    totalPrice.value += item.quantity * item.price;
+                })
+            }
 
+            function resetForm() {
+                dialogVisible.value = false;
+                isPaused.value = true;
+                isScanning.value = false;
+                form.name = '';
+                form.quantity = 1;
+                form.price = 0.00;
+                form.barcode = '';
+            }
+
+            function submitForm() {
+                if (isEditing.value) {  // 如果是编辑状态
+                    if (currentIndex.value !== undefined) {
+                        shoppingList[currentIndex.value] = { ...form };  // 使用 form 数据替换对应项
+                        ElMessage.success('商品编辑成功！');
+                    }
+                } else {    // 如果是新增操作
+                shoppingList.push({ ...form });
+                ElMessage.success('商品添加成功！');
+                }
+                updatePrice();
+                dialogVisible.value = false;
+                setShoppingListToLocalStorage();
+                resetForm();
+            }
+
+            function getAvatarColor() {
+                return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
+            }
+
+            function deleteItem(row, index) {
+                ElMessageBox.confirm(
+                    `确定要删除 ${row.name} 吗？`,
+                    "提示",
+                    {
+                        confirmButtonText: "删除",
+                        cancelButtonText: "取消",
+                        type: "warning",
+                    }
+                ).then(() => {
+                    console.log(index);
+                    shoppingList.splice(index, 1);
+                    updatePrice();
+                    setShoppingListToLocalStorage();
+                    ElMessage.success("删除成功！");
+                }).catch(() => {});
+            }
+
+            function cleanList() {
+                ElMessageBox.confirm(
+                    "确定要清空购物清单吗？",
+                    "提示",
+                    {
+                        confirmButtonText: "确定",
+                        cancelButtonText: "取消",
+                        type: "warning",
+                    }
+                ).then(() => {
+                    shoppingList.splice(0, shoppingList.length);
+                    updatePrice();
+                    setShoppingListToLocalStorage();
+                    ElMessage.success("购物清单已清空！");
+                }).catch(() => {});
+            }
+
+
+            function showScanDialog() {
+                dialogVisible.value = true;
+                isEditing.value = false;
+                startScan();
+            }
+
+            const toggleFlash = () => {
+                flashOn.value = !flashOn.value;
+                console.log('flash is now toggled.');
+            }
+
+            const onReady = (capabilities) => {
+                console.log('摄像头已准备好:', capabilities);
+            }
+
+            const onError = (error) => {
+                console.error("扫码器错误：", error);
+                if (error.name === 'NotAllowedError') {
+                    ElMessage.error('用户拒绝了摄像头权限，请允许访问摄像头');
+                } else if (error.name === 'NotFoundError') {
+                    ElMessage.error('未找到合适的摄像头设备');
+                } else if (error.name === 'NotSupportedError') {
+                    ElMessage.error('请使用 HTTPS 或 localhost 访问本页面');
+                } else if (error.name === 'NotReadableError') {
+                    ElMessage.error('摄像头正在使用中，请关闭其他应用或重新启动浏览器');
+                } else if (error.name === 'OverconstrainedError') {
+                    ElMessage.error('前置摄像头不可用');
+                } else if (error.name === 'StreamApiNotSupportedError') {
+                    ElMessage.error('浏览器不支持相关功能');
+                }
+            }
+
+            const onDetect = (detectedCodes) => {
+                if (detectedCodes && detectedCodes.length > 0) {
+                    const code = detectedCodes[0].rawValue;
+                    form.barcode = code;
+                    console.log("扫描到条码: ", code);
+
+                    fetchProductInfo(code).then(productInfo => {
+                        if (productInfo) {
+                            form.name = productInfo.goodsName;
+                            form.price = parseFloat(productInfo.price);
+                        }
+                    });
+                    stopScan();
+                }
+            }
+
+            function startScan() {
+                isScanning.value = true;
+                isPaused.value = false;
+                console.log('开始扫码');
+            }
+
+            function stopScan() {
+                isScanning.value = false;
+                isPaused.value = true;
+                console.log('停止扫码');
+            }
+
+            function fetchProductInfo(barcode) {
+                const appId = '1y9qomhkrojpgnid';
+                const appSecret = 'dWM72BIOZ3EOA3yVgOXGfsSCvv8rwUsC';
+                const url = `https://www.mxnzp.com/api/barcode/goods/details?barcode=${barcode}&app_id=${appId}&app_secret=${appSecret}`;
+
+                return fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.code === 1) {
+                            return {
+                                goodsName: data.data.goodsName,
+                                price: data.data.price,
+                            };
+                        }
+                        return {goodsName: '', price: 0.0};
+                    })
+                    .catch(err => {
+                        console.error('Error fetching product info:', err);
+                        return {goodsName: '', price: 0.0};
+                    });
+            }
+
+            function handleRowClick(row) {
+                const index = shoppingList.findIndex(item => item === row);
+                ElMessageBox.confirm(
+                    `您想对 ${row.name} 进行什么操作？`,
+                    '操作',
+                    {
+                        distinguishCancelAndClose: true,
+                        confirmButtonText: '编辑',
+                        cancelButtonText: '删除',
+                        type: 'info',
+                    }
+                ).then(() => {
+                    showEditDialog(row, index);
+                }).catch((action) => {
+                    if (action === 'cancel') {
+                        deleteItem(row, index);
+                    }
+                })
+            }
+
+            onMounted(() => {
+                const savedList = getShoppingListFromLocalStorage();
+                savedList.forEach(item => shoppingList.push(item));
+                updatePrice();
+                ElMessage.success('购物清单已加载');
+            });
+
+            return {
+                form,
+                totalPrice,
+                shoppingList,
+                flashOn,
+                toggleFlash,
+                showAddDialog,
+                showEditDialog,
+                showScanDialog,
+                handleRowClick,
+                updatePrice,
+                cleanList,
+                dialogTitle,
+                dialogVisible,
+                isScanning,
+                isPaused,
+                startScan,
+                stopScan,
+                onError,
+                onReady,
+                onDetect,
+                resetForm,
+                submitForm,
+                getAvatarColor,
+            };
+        }
+    });
+
+    for ([name, comp] of Object.entries(ElementPlusIconsVue)) {
+        app.component(name, comp);
+    }
+
+    app.component('qrcode-stream', QrcodeStream); // 使用 QrcodeStream 组件
+    app.use(ElementPlus, { locale: ElementPlusLocaleZhCn });
+    app.mount('#app')
+</script>
 </body>
 </html>

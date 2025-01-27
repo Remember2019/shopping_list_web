@@ -6,8 +6,10 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
+    /*
     background: #f5f7fa linear-gradient(135deg, #f5f7fa, #c3cfe2);
     color: #333;
+    */
     overflow: hidden;
     -webkit-user-select: none; /* Safari */
     -moz-user-select: none;    /* Firefox */
@@ -23,16 +25,21 @@ body {
     flex-direction: column;
     align-items: center;
 }
+
 .total-card {
     margin-top: 10px;
     width: 100%;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 20px;
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
+}
+
+.el-card {
+    --el-card-border-radius: 15px !important;
+    border: 1.5px solid var(--el-card-border-color) !important;
 }
 
 .total-card h1 {
@@ -41,38 +48,13 @@ body {
     color: #555;
 }
 
-.total-card p {
+.total-card .el-statistic__content {
     margin: 5px 0 0;
-    font-size: 2em;
-    font-weight: bold;
+    font-size: 2.3em;
+    font-weight: bolder;
     color: #000;
 }
 
-/* 删除按钮的样式 */
-.delete-btn {
-    background-color: #ff4d4d;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 12px;
-    margin-left: 10px;
-}
-
-.delete-btn:hover {
-    background-color: #e60000;
-}
-
-.item-list {
-    display: flex;
-    padding: 20px;
-    flex-direction: column;
-    width: 100%;
-    max-height: 600px;
-    overflow-y: scroll;
-    scrollbar-width: none;
-}
 /* 商品列表卡片样式 */
 .item {
     display: flex;
@@ -113,29 +95,6 @@ body {
     font-size: 16px;
 }
 
-.item-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.item-info span {
-    font-size: 16px;
-    color: #333;
-}
-
-.item-info .quantity {
-    font-size: 14px;
-    color: #777;
-}
-
-/* 右侧价格 */
-.item-price {
-    font-size: 18px;
-    font-weight: bold;
-    color: #007aff;
-}
-
 /* 长按菜单 */
 .context-menu {
     position: absolute;
@@ -173,6 +132,7 @@ body {
 .menu-bar {
     display: flex;
     width: 100%;
+    margin-bottom: 10px;
 }
 
 .actions {
@@ -227,7 +187,7 @@ body {
 
 /* 滑入到屏幕底部 */
 .sheet.show .sheet-content {
-    transform: translateY(0); /* 滑入到屏幕可见区域 */
+    transform: translateY(0);
 }
 
 .sheet-content h3 {
@@ -272,3 +232,33 @@ body {
     color: #333;
 }
 
+.item-info {
+    display: flex;
+    flex-direction: column;
+    max-width: 170px
+}
+
+.item-info .item-name {
+    font-size: 1.1em;
+}
+
+.item-info .item-quantity {
+    font-size: 0.9em;
+    color: #999;
+}
+
+.item-price {
+    font-size: 19px;
+    color: #fb4646;
+    font-weight: bold;
+}
+
+.el-table__header-wrapper {
+    display: none;
+}
+
+.el-overlay-dialog {
+    height: 96vh;
+    top: 4vh !important;
+    border-radius: 10px 10px 0 0;
+}

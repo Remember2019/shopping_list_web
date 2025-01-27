@@ -299,25 +299,44 @@
             }
 
             function fetchProductInfo(barcode) {
-                const appId = '1y9qomhkrojpgnid';
-                const appSecret = 'dWM72BIOZ3EOA3yVgOXGfsSCvv8rwUsC';
-                const url = `https://www.mxnzp.com/api/barcode/goods/details?barcode=${barcode}&app_id=${appId}&app_secret=${appSecret}`;
-
-                return fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.code === 1) {
-                            return {
-                                goodsName: data.data.goodsName,
-                                price: data.data.price,
-                            };
+                if (barcode.length === 13) {
+                    if (barcode[0] === '2') {
+                        return {
+                            goodsName: '电子秤' + barcode.substring(2, 7),
+                            price: parseFloat(barcode.substring(7, 12)) / 100
                         }
+                    } else {
+                        const appId = '1y9qomhkrojpgnid';
+                        const appSecret = 'dWM72BIOZ3EOA3yVgOXGfsSCvv8rwUsC';
+                        const url = `https://www.mxnzp.com/api/barcode/goods/details?barcode=${barcode}&app_id=${appId}&app_secret=${appSecret}`;
+
+                        return fetch(url)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.code === 1) {
+                                    return {
+                                        goodsName: data.data.goodsName,
+                                        price: data.data.price,
+                                    };
+                                }
+                                return {goodsName: '', price: 0.0};
+                            })
+                            .catch(err => {
+                                console.error('Error fetching product info:', err);
+                                return {goodsName: '', price: 0.0};
+                            });
+                    }
+                } else {
+                    if (barcode[0] === '2') {
+                        return {
+                            goodsName: '电子秤',
+                            price: 0.0,
+                        }
+                    } else {
                         return {goodsName: '', price: 0.0};
-                    })
-                    .catch(err => {
-                        console.error('Error fetching product info:', err);
-                        return {goodsName: '', price: 0.0};
-                    });
+                    }
+                }
+
             }
 
             function handleRowClick(row) {

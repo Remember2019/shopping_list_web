@@ -39,9 +39,10 @@
 
     <el-card shadow="never" class="total-card">
         <h1 id="hint-text">总价格</h1>
-        <el-statistic :value="totalPrice" :precision="2" @click="updatePrice"
+        <el-statistic :value="totalPrice" :precision="2" @click="showDiscountDialog"
                       group-separator="," decimal-separator="." prefix="¥">
         </el-statistic>
+        <span style="display: none">优惠后</span>
     </el-card>
 
     <div class="item-list" id="item-list">
@@ -118,7 +119,7 @@
         </el-dialog>
     </div>
     <div>
-        <el-button type="primary" @click="ruleDialogVisible = true">自定义电子秤</el-button>
+        <el-button style="display: none" type="primary" @click="ruleDialogVisible = true">自定义电子秤</el-button>
         <el-dialog title="自定义电子秤" v-model="ruleDialogVisible" :fullscreen="true">
             <el-form :model="ruleForm">
                 <el-form-item label="示例条码">
@@ -211,6 +212,32 @@
             </template>
         </el-dialog>
     </div>
+    <div class="discount-dialog">
+        <el-dialog title="优惠设置" v-model="discountDialogVisible" :fullscreen="true">
+            <el-form :model="discountForm">
+                <el-form-item label="按折扣">
+                    <el-switch v-model="discountForm.byPercent"></el-switch>
+                    <div v-if="discountForm.byPercent">
+                        <span class="input-span">优惠至原价的</span>
+                        <el-input v-model="discountForm.percent" style="width: 100px">
+                            <template #suffix>
+                                <span>%</span>
+                            </template>
+                        </el-input>
+                    </div>
+                </el-form-item>
+                <el-form-item label="按满减">
+                    <el-switch v-model="discountForm.byAmount"></el-switch>
+                    <div v-if="discountForm.byAmount">
+                        <span class="input-span">满</span>
+                        <el-input-number style="width: 70px" :controls="false" :min="1" v-model="discountForm.amountOver"></el-input-number>
+                        <span class="input-span">减</span>
+                        <el-input-number style="width: 70px" :controls="false" :min="1" v-model="discountForm.amountDiscount"></el-input-number>
+                    </div>
+                </el-form-item>
+            </el-form>
+        </el-dialog>
+    </div>
 </div>
 
 <script>
@@ -224,6 +251,7 @@
             const shoppingList = reactive([]);
             const dialogVisible = ref(false);
             const dialogTitle = ref('添加商品');
+            const discountDialogVisible = ref(false);
             const ruleDialogVisible = ref(false);
             const isEditing = ref(false);
             const isScanning = ref(false);
@@ -256,6 +284,17 @@
                 checkPos2: 13,
                 ifCheck: true,
             });
+            const discountForm = reactive({
+                byPercent: false,
+                percentDiscount: 0.9,
+                byAmount: false,
+                amountOver: 100,
+                amountDiscount: 10,
+            });
+
+            function showDiscountDialog() {
+                discountDialogVisible.value = true;
+            }
 
             function showAddDialog() {
                 dialogTitle.value = '添加商品';
@@ -604,14 +643,17 @@
                 toggleFlash,
                 showAddDialog,
                 showEditDialog,
+                showDiscountDialog,
                 showScanDialog,
                 handleRowClick,
                 updatePrice,
                 cleanList,
                 dialogTitle,
                 dialogVisible,
+                discountDialogVisible,
                 ruleDialogVisible,
                 ruleForm,
+                discountForm,
                 computedUnitPrice,
                 computedPrice,
                 computedWeight,

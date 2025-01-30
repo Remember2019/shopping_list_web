@@ -6,10 +6,6 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    /*
-    background: #f5f7fa linear-gradient(135deg, #f5f7fa, #c3cfe2);
-    color: #333;
-    */
     overflow: hidden;
     -webkit-user-select: none; /* Safari */
     -moz-user-select: none;    /* Firefox */
@@ -55,79 +51,13 @@ body {
     color: #000;
 }
 
-/* 商品列表卡片样式 */
-.item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 15px;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
 
-/* 长按时的缩放效果 */
-.item:active {
-    transform: scale(0.98);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-
-/* 左侧商品信息 */
-.item-left {
-    display: flex;
-    align-items: center;
-}
-
-.item-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: #007aff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-right: 10px;
-    color: white;
-    font-weight: bold;
-    font-size: 16px;
-}
-
-/* 长按菜单 */
-.context-menu {
-    position: absolute;
-    display: none;
-    width: 120px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    overflow: hidden;
-}
-
-.menu-option {
-    padding: 10px 15px;
-    font-size: 16px;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.menu-option:hover {
-    background-color: #f0f0f0;
-}
-
-
-/* 商品列表的占位符 */
 .placeholder {
     font-size: 16px;
     color: #888;
     text-align: center;
     margin-top: 50px;
 }
-
 
 .menu-bar {
     display: flex;
@@ -148,88 +78,6 @@ body {
     background-color: transparent;
     color: #0077de;
     cursor: pointer;
-}
-
-
-/* 初始隐藏状态 */
-.sheet {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    opacity: 0;
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    pointer-events: none; /* 避免隐藏时触发点击 */
-    transition: opacity 0.3s ease;
-}
-
-/* 显示时背景淡入 */
-.sheet.show {
-    opacity: 1;
-    pointer-events: all; /* 允许点击 */
-}
-
-/* 表单内容 */
-.sheet-content {
-    width: 100%;
-    height: 92%;
-    background: white;
-    border-radius: 20px 20px 0 0;
-    padding: 20px;
-    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
-    transform: translateY(100%); /* 初始状态在屏幕下方 */
-    transition: transform 0.3s ease;
-}
-
-/* 滑入到屏幕底部 */
-.sheet.show .sheet-content {
-    transform: translateY(0);
-}
-
-.sheet-content h3 {
-    margin: 15px 0 30px;
-    font-size: 1.8em;
-    color: #333;
-}
-
-.sheet-content label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-.sheet-content input {
-    width: 94%;
-    padding: 10px;
-    margin-bottom: 20px;
-    margin-right: 20px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    font-size: 1em;
-}
-
-.confirm-btn, .close-btn {
-    width: 100%;
-    padding: 10px;
-    margin-top: 10px;
-    border: none;
-    border-radius: 10px;
-    font-size: 1em;
-    cursor: pointer;
-}
-
-.confirm-btn {
-    background: #007bff;
-    color: white;
-}
-
-.close-btn {
-    background: #eee;
-    color: #333;
 }
 
 .item-info {
@@ -261,4 +109,13 @@ body {
     height: 96vh;
     top: 4vh !important;
     border-radius: 10px 10px 0 0;
+}
+
+.el-form-item .input-span {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+.el-form-item .input-item {
+    width: 50px;
 }

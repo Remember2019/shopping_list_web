@@ -81,14 +81,16 @@
         <el-dialog :title="dialogTitle" v-model="dialogVisible" :fullscreen="true"
                    @close="resetForm">
             <el-form :model="form">
-                <el-form-item label="商品名称"
+                <el-form-item label="商品名称" prop="name"
                               :rules="[{ required: true, message: '请输入商品名称', trigger: 'blur' }]">
                     <el-input v-model="form.name"></el-input>
                 </el-form-item>
-                <el-form-item label="数量" :rules="[{ required: true, message: '请输入数量', trigger: 'blur' }]">
+                <el-form-item label="数量" prop="quantity"
+                              :rules="[{ required: true, message: '请输入数量', trigger: 'blur' }]">
                     <el-input-number v-model="form.quantity" :min="0"></el-input-number>
                 </el-form-item>
-                <el-form-item label="单价" :rules="[{ required: true, message: '请输入商品单价', trigger: 'blur' }]">
+                <el-form-item label="单价" prop="price"
+                              :rules="[{ required: true, message: '请输入商品单价', trigger: 'blur' }]">
                     <el-input-number v-model="form.price" :min="0"></el-input-number>
                 </el-form-item>
                 <el-form-item label="条码">
@@ -104,10 +106,108 @@
                         <el-button @click="toggleFlash" type="primary" style="margin-top: 10px">手电筒</el-button>
                     </div>
                 </el-form-item>
+                <el-divider></el-divider>
+                <el-form-item label="总计金额">
+                    <p style="margin: 0; font-size: 20px; font-weight: bold; color: #fb4646;">{{ formTotalPrice }}</p>
+                </el-form-item>
             </el-form>
             <template #footer>
                 <el-button @click="resetForm">取消</el-button>
                 <el-button type="primary" @click="submitForm">确认</el-button>
+            </template>
+        </el-dialog>
+    </div>
+    <div>
+        <el-button type="primary" @click="ruleDialogVisible = true">自定义电子秤</el-button>
+        <el-dialog title="自定义电子秤" v-model="ruleDialogVisible" :fullscreen="true">
+            <el-form :model="ruleForm">
+                <el-form-item label="示例条码">
+                    <el-input v-model="ruleForm.exampleBarcode" placeholder="请输入符合规则的条码"></el-input>
+                </el-form-item>
+                <el-form-item label="条码长度">
+                    <el-input disable v-model="ruleForm.exampleBarcode.length"></el-input>
+                </el-form-item>
+                <el-divider></el-divider>
+                <el-form-item label="标识位">
+                    <el-switch disabled v-model="trueValue"></el-switch>
+                    <span class="input-span">第</span>
+                    <el-input-number :controls="false" class="input-item" v-model="ruleForm.markPos1" :min="1"></el-input-number>
+                    <span class="input-span">位 ~ 第</span>
+                    <el-input-number :controls="false" class="input-item" v-model="ruleForm.markPos2" :min="1"></el-input-number>
+                    <span class="input-span">位</span>
+                    <el-tag style="margin-left: 10px">{{ ruleForm.exampleBarcode.slice(ruleForm.markPos1-1,ruleForm.markPos2) }}</el-tag>
+                </el-form-item>
+                <el-form-item label="货号位">
+                    <el-switch disabled v-model="trueValue"></el-switch>
+                    <span class="input-span">第</span>
+                    <el-input-number :controls="false" class="input-item" v-model="ruleForm.goodsPos1" :min="1"></el-input-number>
+                    <span class="input-span">位 ~ 第</span>
+                    <el-input-number :controls="false" class="input-item" v-model="ruleForm.goodsPos2" :min="1"></el-input-number>
+                    <span class="input-span">位</span>
+                    <el-tag style="margin-left: 10px">{{ ruleForm.exampleBarcode.slice(ruleForm.goodsPos1-1,ruleForm.goodsPos2) }}</el-tag>
+                </el-form-item>
+                <el-form-item label="重量位">
+                    <el-switch v-model="ruleForm.ifWeight"></el-switch>
+                    <el-row v-if="ruleForm.ifWeight">
+                        <span class="input-span">第</span>
+                        <el-input-number :controls="false" class="input-item" v-model="ruleForm.weightPos1" :min="1"></el-input-number>
+                        <span class="input-span">位 ~ 第</span>
+                        <el-input-number :controls="false" class="input-item" v-model="ruleForm.weightPos2" :min="1"></el-input-number>
+                        <span class="input-span">位</span>
+                        <el-tag style="margin-left: 10px">{{ ruleForm.exampleBarcode.slice(ruleForm.weightPos1-1,ruleForm.weightPos2) }}</el-tag>
+                    </el-row>
+                </el-form-item>
+                <el-form-item label="金额位">
+                    <el-switch v-model="ruleForm.ifPrice"></el-switch>
+                    <el-row v-if="ruleForm.ifPrice">
+                        <span class="input-span">第</span>
+                        <el-input-number :controls="false" class="input-item" v-model="ruleForm.pricePos1" :min="1"></el-input-number>
+                        <span class="input-span">位 ~ 第</span>
+                        <el-input-number :controls="false" class="input-item" v-model="ruleForm.pricePos2" :min="1"></el-input-number>
+                        <span class="input-span">位</span>
+                        <el-tag style="margin-left: 10px">{{ ruleForm.exampleBarcode.slice(ruleForm.pricePos1-1,ruleForm.pricePos2) }}</el-tag>
+                    </el-row>
+                </el-form-item>
+                <el-form-item label="单价位">
+                    <el-switch v-model="ruleForm.ifUnitPrice"></el-switch>
+                    <el-row v-if="ruleForm.ifUnitPrice">
+                        <span class="input-span">第</span>
+                        <el-input-number :controls="false" class="input-item" v-model="ruleForm.unitPricePos1" :min="1"></el-input-number>
+                        <span class="input-span">位 ~ 第</span>
+                        <el-input-number :controls="false" class="input-item" v-model="ruleForm.unitPricePos2" :min="1"></el-input-number>
+                        <span class="input-span">位</span>
+                        <el-tag style="margin-left: 10px">{{ ruleForm.exampleBarcode.slice(ruleForm.unitPricePos1-1,ruleForm.unitPricePos2) }}</el-tag>
+                    </el-row>
+                </el-form-item>
+                <el-form-item label="校验位">
+                    <el-switch v-model="ruleForm.ifCheck"></el-switch>
+                    <el-row v-if="ruleForm.ifCheck">
+                        <span class="input-span">第</span>
+                        <el-input-number :controls="false" class="input-item" v-model="ruleForm.checkPos1" :min="1"></el-input-number>
+                        <span class="input-span">位 ~ 第</span>
+                        <el-input-number :controls="false" class="input-item" v-model="ruleForm.checkPos2" :min="1"></el-input-number>
+                        <span class="input-span">位</span>
+                        <el-tag style="margin-left: 10px">{{ ruleForm.exampleBarcode.slice(ruleForm.checkPos1-1,ruleForm.checkPos2) }}</el-tag>
+                    </el-row>
+                </el-form-item>
+                <el-divider></el-divider>
+                <p>按照上述自定义规则，解析示例条码信息：</p>
+                <el-form-item label="货号">
+                    <span>{{ ruleForm.exampleBarcode.slice(ruleForm.goodsPos1-1,ruleForm.goodsPos2) }}</span>
+                </el-form-item>
+                <el-form-item label="单价" v-if="ruleForm.ifUnitPrice">
+                    <span>{{ computedUnitPrice }}</span>
+                </el-form-item>
+                <el-form-item label="重量" v-if="ruleForm.ifWeight">
+                    <span>{{ computedWeight }} kg</span>
+                </el-form-item>
+                <el-form-item label="价格" v-if="ruleForm.ifPrice">
+                    <span>{{ computedPrice }} 元</span>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="cancelRuleForm">取消</el-button>
+                <el-button type="primary" @click="submitRuleForm">确认</el-button>
             </template>
         </el-dialog>
     </div>
@@ -124,16 +224,38 @@
             const shoppingList = reactive([]);
             const dialogVisible = ref(false);
             const dialogTitle = ref('添加商品');
+            const ruleDialogVisible = ref(false);
             const isEditing = ref(false);
             const isScanning = ref(false);
             const isPaused = ref(false);
             const flashOn = ref(false);
+            const trueValue = ref(true);
             const form = reactive({
                 name: '',
                 quantity: 1,
                 price: 0.00,
                 barcode: '',
-            })
+            });
+            const ruleForm = reactive({
+                exampleBarcode: '',
+                markPos1: 1,
+                markPos2: 1,
+                markRule: '',
+                goodsPos1: 3,
+                goodsPos2: 7,
+                pricePos1: 8,
+                pricePos2: 12,
+                ifPrice: true,
+                weightPos1: 13,
+                weightPos2: 17,
+                ifWeight: false,
+                unitPricePos1: 1,
+                unitPricePos2: 1,
+                ifUnitPrice: false,
+                checkPos1: 13,
+                checkPos2: 13,
+                ifCheck: true,
+            });
 
             function showAddDialog() {
                 dialogTitle.value = '添加商品';
@@ -301,7 +423,17 @@
 
             async function fetchProductInfo(barcode) {
                 if (barcode.length === 13) {
+                    // 匹配大部分商场电子秤
                     if (barcode[0] === '2') {
+                        if (barcode[1] === '5' && barcode.substring(8, 12) === '0000') {
+                            // 匹配麦德龙特殊编码
+                            console.log('麦德龙无法解析');
+                            return {
+                                goodsName: '电子秤' + barcode.substring(2, 8),
+                                price: 0.0,
+                                quantity: 1
+                            }
+                        }
                         return {
                             goodsName: '电子秤' + barcode.substring(2, 7),
                             price: parseFloat(barcode.substring(7, 12)) / 100,
@@ -328,19 +460,78 @@
                             return { goodsName: '', price: 0.0, quantity: 1 };  // 捕获错误时返回空数据
                         }
                     }
-                } else {
-                    if (barcode.length === 18 && barcode[0] === '2') {
+                } else if (barcode.length === 18) {
+                    // 匹配丽达超市、华润、盒马和家家悦电子秤
+                    if (barcode[0] === '2') {
                         // 27 23242 03000 00150 5
+                        // 22 07721 01469 00294 8
+                        // 23 25062 02569 00130 4
+                        // 2 182684 02990 00001 4
                         console.log(barcode)
                         const sum_price = parseFloat(barcode.substring(7,12)) / 100;
                         const quantity = parseFloat(barcode.substring(12,17)) / 1000;
-                        console.log(quantity);
                         return {
                             goodsName: '电子秤' + barcode.substring(2,7),
-                            price: sum_price / quantity,
+                            price: (sum_price / quantity).toFixed(2),
                             quantity: quantity,
                         };
                     } else {
+                        return { goodsName: '', price: 0.0, quantity: 1 };  // 如果未找到商品信息，返回空数据
+                    }
+                } else if (barcode.length === 20) {
+                    // 匹配利群超市电子秤
+                    if (barcode[0] === '2') {
+                        // 28 98059 000204 002444 1
+                        // 28 09824 000242 002899 1
+                        console.log(barcode)
+                        const sum_price = parseFloat(barcode.substring(13, 19)) / 100;
+                        const quantity = parseFloat(barcode.substring(7, 13)) / 1000;
+                        return {
+                            goodsName: '电子秤' + barcode.substring(2, 7),
+                            price: (sum_price / quantity).toFixed(2),
+                            quantity: quantity,
+                        }
+                    } else {
+                        return {goodsName: '', price: 0.0, quantity: 1};  // 如果未找到商品信息，返回空数据
+                    }
+                } else if ( barcode.length === 24 ){
+                    // 匹配家家悦日期编码电子秤
+                    // 2 202576 00300 0000 14 241113
+                    if (barcode[0] === '2') {
+                        return {
+                            goodsName: '电子秤' + barcode.substring(1, 7),
+                            price: parseFloat(barcode.substring(7, 12)) / 100,
+                            quantity: 1,
+                        }
+                    } else {
+                        return {goodsName: '', price: 0.0, quantity: 1};  // 如果未找到商品信息，返回空数据
+                    }
+                } else {
+                    // 匹配大润发超市电子秤
+                    // 3 4151809 00001 0001600 501001
+                    // 20 3830205 00001 0002190 43656
+                    if (barcode.length === 26) {
+                        if (barcode[0] === '2') {
+                            const sum_price = parseFloat(barcode.substring(14,21)) / 100;
+                            const quantity = parseFloat(barcode.substring(9,14));
+                            return {
+                                goodsName: '电子秤' + barcode.substring(2,9),
+                                price: (sum_price / quantity).toFixed(2),
+                                quantity: quantity,
+                            }
+                        } else if (barcode[0] === '3') {
+                            const sum_price = parseFloat(barcode.substring(13,20)) / 100;
+                            const quantity = parseFloat(barcode.substring(8,13));
+                            return {
+                                goodsName: '电子秤' + barcode.substring(1,8),
+                                price: (sum_price / quantity).toFixed(2),
+                                quantity: quantity,
+                            }
+                        } else {
+                            return { goodsName: '', price: 0.0, quantity: 1 };  // 如果未找到商品信息，返回空数据
+                        }
+                    } else {
+                        // Ole超市待解析
                         return { goodsName: '', price: 0.0, quantity: 1 };  // 如果未找到商品信息，返回空数据
                     }
                 }
@@ -366,6 +557,37 @@
                 })
             }
 
+            const computedUnitPrice = computed(() => {
+                if (!ruleForm.exampleBarcode) return "0.00";
+                const priceStr = ruleForm.exampleBarcode.slice(
+                    ruleForm.unitPricePos1 - 1,
+                    ruleForm.unitPricePos2
+                );
+                return parseFloat(priceStr) / 100 || "0.00"; // 防止 NaN
+            });
+
+            const computedPrice = computed(() => {
+                if (!ruleForm.exampleBarcode) return "0.00";
+                const priceStr = ruleForm.exampleBarcode.slice(
+                    ruleForm.pricePos1 - 1,
+                    ruleForm.pricePos2
+                );
+                return parseFloat(priceStr) / 100 || "0.00"; // 防止 NaN
+            });
+
+            const computedWeight = computed(() => {
+                if (!ruleForm.exampleBarcode) return "0.000";
+                const weightStr = ruleForm.exampleBarcode.slice(
+                    ruleForm.weightPos1 - 1,
+                    ruleForm.weightPos2
+                );
+                return parseFloat(weightStr) / 1000 || "0.000"; // 防止 NaN
+            });
+
+            const formTotalPrice = computed(() => {
+                return (parseFloat(form.price) * parseFloat(form.quantity)).toFixed(2);
+            })
+
             onMounted(() => {
                 const savedList = getShoppingListFromLocalStorage();
                 savedList.forEach(item => shoppingList.push(item));
@@ -378,6 +600,7 @@
                 totalPrice,
                 shoppingList,
                 flashOn,
+                trueValue,
                 toggleFlash,
                 showAddDialog,
                 showEditDialog,
@@ -387,6 +610,12 @@
                 cleanList,
                 dialogTitle,
                 dialogVisible,
+                ruleDialogVisible,
+                ruleForm,
+                computedUnitPrice,
+                computedPrice,
+                computedWeight,
+                formTotalPrice,
                 isScanning,
                 isPaused,
                 startScan,

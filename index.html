@@ -39,10 +39,12 @@
 
     <el-card shadow="never" class="total-card">
         <h1 id="hint-text">总价格</h1>
-        <el-statistic :value="totalPrice" :precision="2" @click="showDiscountDialog"
-                      group-separator="," decimal-separator="." prefix="¥">
+        <el-statistic :value="realTotalPrice" :precision="2" @click="showDiscountDialog"
+                      group-separator="," decimal-separator="." prefix="¥" :class="priceColorClass" id="big-price">
         </el-statistic>
-        <span style="display: none">优惠后</span>
+        <el-statistic :value="totalPrice" class="discount-price" v-if="ifDiscount" :precision="2"
+                      group-separator="," decimal-separator="." prefix="原价 ¥">
+        </el-statistic>
     </el-card>
 
     <div class="item-list" id="item-list">
@@ -76,6 +78,13 @@
             </template>
         </el-table-column>
     </el-table>
+    </div>
+    <div class="checkout-button">
+        <el-button type="primary" circle style="width: 60px; height: 60px" @click="showCheckDialog">
+            <el-icon style="font-size: 24px">
+                <Check />
+            </el-icon>
+        </el-button>
     </div>
 
     <div class="add-dialog">
@@ -216,26 +225,49 @@
         <el-dialog title="优惠设置" v-model="discountDialogVisible" :fullscreen="true">
             <el-form :model="discountForm">
                 <el-form-item label="按折扣">
-                    <el-switch v-model="discountForm.byPercent"></el-switch>
-                    <div v-if="discountForm.byPercent">
+                    <div>
                         <span class="input-span">优惠至原价的</span>
-                        <el-input v-model="discountForm.percent" style="width: 100px">
-                            <template #suffix>
-                                <span>%</span>
-                            </template>
-                        </el-input>
+                        <el-input-number :controls="false" v-model="discountForm.percentDiscount"
+                                         :max="100" :min="0.01" style="width: 60px">
+                        </el-input-number>
+                        <span class="input-span">%</span>
+                        <div class="discount-buttons">
+                            <el-button size="small" @click="discountForm.percentDiscount = 10">一折</el-button>
+                            <el-button size="small" @click="discountForm.percentDiscount = 20">二折</el-button>
+                            <el-button size="small" @click="discountForm.percentDiscount = 30">三折</el-button>
+                            <el-button size="small" @click="discountForm.percentDiscount = 40">四折</el-button>
+                            <el-button size="small" @click="discountForm.percentDiscount = 50">五折</el-button>
+                            <el-button size="small" @click="discountForm.percentDiscount = 60">六折</el-button>
+                            <el-button size="small" @click="discountForm.percentDiscount = 70">七折</el-button>
+                            <el-button size="small" @click="discountForm.percentDiscount = 80">八折</el-button>
+                            <el-button size="small" @click="discountForm.percentDiscount = 90">九折</el-button>
+                            <el-button size="small" @click="discountForm.percentDiscount = 100">原价</el-button>
+                        </div>
                     </div>
                 </el-form-item>
                 <el-form-item label="按满减">
-                    <el-switch v-model="discountForm.byAmount"></el-switch>
-                    <div v-if="discountForm.byAmount">
+                    <div style="width: 100%">
                         <span class="input-span">满</span>
-                        <el-input-number style="width: 70px" :controls="false" :min="1" v-model="discountForm.amountOver"></el-input-number>
+                        <el-input-number disabled style="width: 70px" :controls="false" :min="0" v-model="discountForm.amountOver"></el-input-number>
                         <span class="input-span">减</span>
-                        <el-input-number style="width: 70px" :controls="false" :min="1" v-model="discountForm.amountDiscount"></el-input-number>
+                        <el-input-number disabled style="width: 70px" :controls="false" :min="0" v-model="discountForm.amountDiscount"></el-input-number>
                     </div>
+                    <div class="discount-buttons" style="width: 100%; margin-top: 10px">
+                        <el-button size="small" disabled @click="discountForm.amountOver=50">50减10</el-button>
+                        <el-button size="small" disabled @click="discountForm.amountOver=100">100减20</el-button>
+                    </div>
+                    <span style="color: #999;">*暂不支持满减优惠设置</span>
                 </el-form-item>
             </el-form>
+            <template #footer>
+                <el-button @click="cancelDiscountForm">取消</el-button>
+                <el-button type="primary" @click="submitDiscountForm">确定</el-button>
+            </template>
+        </el-dialog>
+    </div>
+    <div class="check-dialog">
+        <el-dialog title="结算" v-model="checkDialogVisible" :fullscreen="true">
+            <span style="color: #999;">*暂不支持结算功能</span>
         </el-dialog>
     </div>
 </div>
@@ -253,9 +285,13 @@
             const dialogTitle = ref('添加商品');
             const discountDialogVisible = ref(false);
             const ruleDialogVisible = ref(false);
+            const checkDialogVisible = ref(false);
             const isEditing = ref(false);
             const isScanning = ref(false);
             const isPaused = ref(false);
+            const discountPercent = ref(100);
+            const discountAmountOver = ref(0);
+            const discountAmount = ref(0);
             const flashOn = ref(false);
             const trueValue = ref(true);
             const form = reactive({
@@ -285,11 +321,9 @@
                 ifCheck: true,
             });
             const discountForm = reactive({
-                byPercent: false,
-                percentDiscount: 0.9,
-                byAmount: false,
-                amountOver: 100,
-                amountDiscount: 10,
+                percentDiscount: 100,
+                amountOver: 0,
+                amountDiscount: 0,
             });
 
             function showDiscountDialog() {
@@ -311,6 +345,10 @@
                 form.price = item.price;
                 form.barcode = item.barcode;
                 dialogVisible.value = true;
+            }
+
+            function showCheckDialog() {
+                checkDialogVisible.value = true;
             }
 
             function getShoppingListFromLocalStorage() {
@@ -357,6 +395,18 @@
                 dialogVisible.value = false;
                 setShoppingListToLocalStorage();
                 resetForm();
+            }
+
+            function cancelDiscountForm() {
+                discountDialogVisible.value = false;
+            }
+
+            function submitDiscountForm() {
+                discountDialogVisible.value = false;
+                discountPercent.value = discountForm.percentDiscount;
+                discountAmountOver.value = discountForm.amountOver;
+                discountAmount.value = discountForm.amountDiscount;
+                ElMessage.success('折扣已设置！');
             }
 
             function getAvatarColor() {
@@ -627,6 +677,27 @@
                 return (parseFloat(form.price) * parseFloat(form.quantity)).toFixed(2);
             })
 
+            const discountedPrice = computed(() => {
+                const percent = parseFloat(discountPercent.value / 100);
+                return (totalPrice.value * percent).toFixed(2);
+            })
+
+            const realTotalPrice = computed(() => {
+                if (ifDiscount.value)
+                    return parseFloat(discountedPrice.value);
+                return totalPrice.value;
+            })
+
+            const ifDiscount = computed(() => {
+               return discountPercent.value < 100 || discountAmount > 0;
+            })
+
+            const priceColorClass = computed(() => {
+                if (ifDiscount.value)
+                    return 'price-green';
+                return 'price-black';
+            })
+
             onMounted(() => {
                 const savedList = getShoppingListFromLocalStorage();
                 savedList.forEach(item => shoppingList.push(item));
@@ -637,21 +708,31 @@
             return {
                 form,
                 totalPrice,
+                realTotalPrice,
+                priceColorClass,
                 shoppingList,
                 flashOn,
                 trueValue,
+                discountAmountOver,
+                discountAmount,
+                discountPercent,
+                discountedPrice,
                 toggleFlash,
                 showAddDialog,
                 showEditDialog,
+                showCheckDialog,
                 showDiscountDialog,
                 showScanDialog,
                 handleRowClick,
                 updatePrice,
                 cleanList,
+                cancelDiscountForm,
+                submitDiscountForm,
                 dialogTitle,
                 dialogVisible,
                 discountDialogVisible,
                 ruleDialogVisible,
+                checkDialogVisible,
                 ruleForm,
                 discountForm,
                 computedUnitPrice,
@@ -660,6 +741,7 @@
                 formTotalPrice,
                 isScanning,
                 isPaused,
+                ifDiscount,
                 startScan,
                 stopScan,
                 onError,

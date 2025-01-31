@@ -44,7 +44,7 @@ body {
     color: #555;
 }
 
-.total-card .el-statistic__content {
+#big-price .el-statistic__content {
     margin: 5px 0 0;
     font-size: 2.3em;
     font-weight: bolder;
@@ -118,4 +118,50 @@ body {
 
 .el-form-item .input-item {
     width: 50px;
+}
+
+.discount-price * {
+    margin-top: 0 !important;
+}
+
+.discount-price span {
+    font-size: 16px !important;
+    font-weight: normal;
+    text-decoration: line-through;
+    color: #999;
+}
+
+.price-green span {
+    color: #4e8e2f;
+}
+
+.price-black span {
+    color: #000;
+}
+
+.discount-buttons {
+    margin-top: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.discount-buttons button {
+    margin-bottom: 5px;
+    margin-left: 0 !important;
+    margin-right: 5px;
+}
+
+.checkout-button {
+    position: fixed;
+    bottom: 55px;
+    left: 78vw;
+    z-index: 2;
+    width: 100%;
+}
+
+.check-dialog .el-overlay-dialog {
+    height: 100vh !important;
+    top: 0 !important;
+    border-radius: 0;
 }

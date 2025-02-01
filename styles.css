@@ -165,3 +165,78 @@ body {
     top: 0 !important;
     border-radius: 0;
 }
+
+.check-title {
+    display: flex;
+    flex-direction: row;
+}
+
+.check-title span {
+    display: flex;
+    justify-content: flex-start;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.check-detail {
+    display: flex;
+    flex-direction: column;
+}
+
+.check-detail .basic-info {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.check-detail .extra-info {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-start;
+    margin-top: 2px;
+}
+
+.extra-info span {
+    margin-top: 0 !important;
+}
+
+.check-detail span {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 15px;
+    font-size: 15px;
+}
+
+.check-result {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.check-discount-price {
+    text-decoration: line-through;
+}
+
+.check-normal-price {
+    font-weight: bold;
+}
+
+.check-cash-extra span {
+    text-decoration: line-through;
+    font-size: 18px;
+    color: var(--el-text-color-regular);
+}
+
+.check-cash span {
+    color: var(--el-text-color-regular);
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.check-options {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    margin-top: 20px;
+}

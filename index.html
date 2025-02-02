@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>购物清单</title>
     <link rel="stylesheet" href="styles.css" type="text/css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.3.3/dist/index.css">
-    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.45/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/element-plus@2.3.3/dist/index.full.js"></script>
-    <script src="https://unpkg.com/element-plus@2.8.1/dist/locale/zh-cn.js"></script>
-    <script src="//cdn.jsdelivr.net/npm/@element-plus/icons-vue"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vue-qrcode-reader/dist/vue-qrcode-reader.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+    <link rel="stylesheet" href="./css/element-plus/index.css">
+    <script src="./scripts/vue.global.js"></script>
+    <script src="./scripts/element-plus/index.full.js"></script>
+    <script src="./scripts/element-plus/zh-cn.js"></script>
+    <script src="./scripts/element-plus/icons-vue.js"></script>
+    <script src="./scripts/vue-qrcode-reader.umd.min.js"></script>
+    <script src="./scripts/font-awesome/all.min.js"></script>
     <link rel="manifest" href="/manifest.json">
 </head>
 
@@ -72,7 +72,7 @@
             <template #default="scope">
                 <div style="align-items: center; justify-content: end; display: flex;">
                     <span class="item-price">
-                        ¥{{ (Math.floor((scope.row.quantity * scope.row.price) * 100) / 100).toFixed(2) }}
+                        ¥{{ (Math.floor((scope.row.quantity * scope.row.price) * 1000 ) / 1000 ).toFixed(2) }}
                     </span>
                 </div>
             </template>
@@ -266,32 +266,32 @@
         </el-dialog>
     </div>
     <div class="check-dialog">
-        <el-dialog title="结算" v-model="checkDialogVisible" :fullscreen="true">
+        <el-dialog title="结算" v-model="checkDialogVisible" :fullscreen="true" @close="handleCheckClose">
             <div class="check-receipt">
                 <div class="check-title">
-                    <span style="width: 60%">商品</span>
+                    <span style="width: 55%">商品</span>
                     <span style="width: 15%">单价</span>
                     <span style="width: 15%">数量</span>
-                    <span style="width: 10%">小计</span>
+                    <span style="width: 15%">小计</span>
                 </div>
-                <div style="overflow-y: scroll; scrollbar-width: none; height: 60vh;">
+                <div style="overflow-y: scroll; scrollbar-width: none; height: 65vh;">
                     <div v-for="(item, index) in shoppingList" :key="index" class="check-detail">
                         <div class="basic-info">
-                            <span style="width: 58%">{{ item.name }}</span>
+                            <span style="width: 55%">{{ item.name }}</span>
                             <span style="width: 15%">{{ item.price.toFixed(2) }}</span>
                             <span style="width: 15%">{{ item.quantity.toFixed(3) }}</span>
-                            <span style="width: 12%" :class="checkPriceClass">{{ (Math.floor((item.price * item.quantity) * 100) / 100).toFixed(2) }}</span>
+                            <span style="width: 15%" :class="checkPriceClass">{{ (Math.floor((item.price * item.quantity) * 1000) / 1000).toFixed(2) }}</span>
                         </div>
                         <div class="extra-info" v-if="ifDiscount">
-                            <span style="width: 88%"></span>
-                            <span style="width: 12%; font-weight: bold">{{ (Math.floor((item.price * item.quantity) * 100) / 100 * discountPercent / 100).toFixed(2) }}</span>
+                            <span style="width: 85%"></span>
+                            <span style="width: 15%; font-weight: bold">{{ (Math.floor((item.price * item.quantity) * 1000) / 1000 * discountPercent / 100).toFixed(2) }}</span>
                         </div>
                     </div>
                 </div>
                 <el-divider style="margin-top: 10px; margin-bottom: 10px;"></el-divider>
                 <div class="check-result">
-                    <span style="width: 87%; font-weight: bold">总计</span>
-                    <span style="width: 13%">
+                    <span style="width: 83%; font-weight: bold">总计</span>
+                    <span style="width: 17%">
                         <el-statistic class="check-cash-extra" :value="totalPrice" :precision="2"
                                       group-separator="," decimal-separator="." v-if="ifDiscount">
                         </el-statistic>
@@ -313,7 +313,7 @@
                         <el-input-number :controls="false" style="width: 80px" v-model="cashInput" placeholder="金额" :min="realTotalPrice" :precision="2"></el-input-number>
                         <span class="input-span" style="margin-left: 5px">元</span>
                     </div>
-                    <span style="margin-left: 10px; margin-top: 5px; font-weight: bold;">找零: {{ (cashInput - Math.floor(realTotalPrice * 100) / 100).toFixed(2) }}元</span>
+                    <span style="margin-left: 10px; margin-top: 5px; font-weight: bold;">找零: {{ (cashInput - Math.floor(realTotalPrice * 1000) / 1000).toFixed(2) }}元</span>
                 </div>
                 <div v-if="showCardInput" style="margin-top: 20px; display: flex; flex-direction: row; justify-content: center">
                     <div style="width: 50%">
@@ -321,7 +321,7 @@
                         <el-input-number :controls="false" style="width: 80px" v-model="cardInput" placeholder="金额" :min="0" :precision="2"></el-input-number>
                         <span class="input-span" style="margin-left: 5px">元</span>
                     </div>
-                    <span style="margin-left: 10px; margin-top: 5px; font-weight: bold;">现余额: {{ (cardInput - Math.floor(realTotalPrice * 100) / 100).toFixed(2) }}元</span>
+                    <span style="margin-left: 10px; margin-top: 5px; font-weight: bold;">现余额: {{ (cardInput - Math.floor(realTotalPrice * 1000) / 1000).toFixed(2) }}元</span>
                 </div>
             </div>
         </el-dialog>
@@ -427,7 +427,9 @@
             function updatePrice() {
                 totalPrice.value = 0;
                 shoppingList.forEach(item => {
-                    totalPrice.value += item.quantity * item.price;
+                    const addedPrice = parseFloat((Math.floor((item.quantity * item.price) * 1000) / 1000).toFixed(2));
+                    console.log(addedPrice);
+                    totalPrice.value += addedPrice;
                 })
             }
 
@@ -490,6 +492,13 @@
 
             function getAvatarColor() {
                 return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
+            }
+
+            function handleCheckClose() {
+                showCashInput.value = false;
+                showCardInput.value = false;
+                cashInput.value = 0;
+                cardInput.value = 0;
             }
 
             function deleteItem(row, index) {
@@ -753,7 +762,7 @@
             });
 
             const formTotalPrice = computed(() => {
-                return (Math.floor((parseFloat(form.price) * parseFloat(form.quantity)) * 100) / 100).toFixed(2);
+                return (Math.floor((parseFloat(form.price) * parseFloat(form.quantity)) * 1000) / 1000).toFixed(2);
             })
 
             const discountedPrice = computed(() => {
@@ -803,6 +812,7 @@
                 showCashInput,
                 cardInput,
                 showCardInput,
+                handleCheckClose,
                 payOnline,
                 payWithCard,
                 payInCash,

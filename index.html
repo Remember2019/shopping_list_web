@@ -832,13 +832,14 @@
                 let nowYOffset = contentYOffset + lineHeight;
 
                 shoppingList.forEach((item, index) => {
-                    const name_lines = doc.splitTextToSize(item.name);
+                    const name_lines = doc.splitTextToSize(item.name, 28);
                     const text_height = name_lines.length * lineHeight;
                     const now_price = item.price.toFixed(2).toString();
                     const now_quantity = item.quantity.toFixed(3).toString();
                     const now_total = (Math.floor((item.price * item.quantity) * 1000) / 1000).toFixed(2).toString();
 
                     name_lines.forEach((line, index) => {
+                        console.log(index, line);
                         doc.text(line, nowXOffset, nowYOffset + lineHeight * index);
                     })
                     doc.text(now_price, xOffset + 30, nowYOffset);
@@ -866,7 +867,7 @@
                 doc.setLineWidth(0.2);
                 doc.line(xOffset, nowYOffset - 3, xOffset + 62, nowYOffset - 3);
                 doc.text('总计', xOffset, nowYOffset + 3);
-                doc.text(realTotalPrice.value.toString(), xOffset + 55, nowYOffset + 3);
+                doc.text(realTotalPrice.value.toFixed(2).toString(), xOffset + 55, nowYOffset + 3);
 
                 doc.save('receipt.pdf');
                 if (checkMethod === '现金支付') {

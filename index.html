@@ -12,6 +12,8 @@
     <script src="./scripts/element-plus/icons-vue.js"></script>
     <script src="./scripts/vue-qrcode-reader.umd.min.js"></script>
     <script src="./scripts/font-awesome/all.min.js"></script>
+    <script src="./scripts/jspdf.umd.min.js"></script>
+    <script src="./assets/font/FZSongHei_GBK-normal.js"></script>
     <link rel="manifest" href="/manifest.json">
 </head>
 
@@ -307,7 +309,7 @@
                 <el-button type="primary" @click="payWithCard">预付卡支付</el-button>
             </div>
             <div class="check-input">
-                <div v-if="showCashInput" style="margin-top: 20px; display: flex; flex-direction: row; justify-content: center">
+                <div v-if="showCashInput" style="margin-top: 15px; display: flex; flex-direction: row; justify-content: center">
                     <div style="width: 50%">
                         <span class="input-span" style="font-weight: bold;">支付现金: </span>
                         <el-input-number :controls="false" style="width: 80px" v-model="cashInput" placeholder="金额" :min="realTotalPrice" :precision="2"></el-input-number>
@@ -324,6 +326,9 @@
                     <span style="margin-left: 10px; margin-top: 5px; font-weight: bold;">现余额: {{ (cardInput - Math.floor(realTotalPrice * 1000) / 1000).toFixed(2) }}元</span>
                 </div>
             </div>
+            <div style="width: 93%; margin-top: 15px; justify-self: center">
+                <el-button style="width: 100%" type="success" @click="exportCheck">导出账单</el-button>
+            </div>
         </el-dialog>
     </div>
 </div>
@@ -332,6 +337,7 @@
     const { createApp, ref, reactive, onMounted, computed } = Vue;
     const { ElMessage, ElMessageBox } = ElementPlus;
     const { QrcodeStream } = window.VueQrcodeReader;
+    const { jsPDF } = window.jspdf;
     const app = createApp({
         setup() {
             const totalPrice = ref(0);
@@ -428,7 +434,6 @@
                 totalPrice.value = 0;
                 shoppingList.forEach(item => {
                     const addedPrice = parseFloat((Math.floor((item.quantity * item.price) * 1000) / 1000).toFixed(2));
-                    console.log(addedPrice);
                     totalPrice.value += addedPrice;
                 })
             }
@@ -792,6 +797,90 @@
                 return 'check-normal-price';
             })
 
+            const exportCheck = () => {
+                const checkMethod = showCardInput.value ? '预付卡支付' : showCashInput.value ? '现金支付' : '线上支付';
+                console.log(checkMethod);
+                const doc = new jsPDF({
+                    orientation: 'p',  // 'p' 代表纵向
+                    unit: 'mm',        // 使用毫米作为单位
+                    format: [80, 200]  // 设置纸张尺寸：宽80mm，高200mm
+                });
+                doc.addFileToVFS('FZSongHei_GBK-normal.ttf', font);
+                doc.addFont('FZSongHei_GBK-normal.ttf', 'FZSongHei_GBK', 'normal');  // 注册字体
+                doc.setFont('FZSongHei_GBK', 'normal');
+                doc.setFontSize(9);
+
+                let yOffset = 10;  // 初始 y 坐标
+                let xOffset = 10;  // 初始 x 坐标
+                const textWidth = 30;
+                const lineHeight = 5;  // 行高
+
+                function getMidTextX(text) {
+                    const pageWidth = doc.internal.pageSize.width;
+                    const textWidth = doc.getTextWidth(text);
+                    return (pageWidth - textWidth) / 2;
+                }
+                const text = '结账单';
+                doc.text(text, getMidTextX(text), yOffset);
+                doc.text('商品', xOffset, yOffset + lineHeight + 5);
+                doc.text('单价', xOffset + 30, yOffset + lineHeight + 5);
+                doc.text('数量', xOffset + 42, yOffset + lineHeight + 5);
+                doc.text('小计', xOffset + 55, yOffset + lineHeight + 5);
+                doc.line(xOffset, yOffset + lineHeight + 7, xOffset + 62, yOffset + lineHeight + 7);
+                const contentYOffset = yOffset + lineHeight + 7;
+                let nowXOffset = xOffset;
+                let nowYOffset = contentYOffset + lineHeight;
+
+                shoppingList.forEach((item, index) => {
+                    const name_lines = doc.splitTextToSize(item.name);
+                    const text_height = name_lines.length * lineHeight;
+                    const now_price = item.price.toFixed(2).toString();
+                    const now_quantity = item.quantity.toFixed(3).toString();
+                    const now_total = (Math.floor((item.price * item.quantity) * 1000) / 1000).toFixed(2).toString();
+
+                    name_lines.forEach((line, index) => {
+                        doc.text(line, nowXOffset, nowYOffset + lineHeight * index);
+                    })
+                    doc.text(now_price, xOffset + 30, nowYOffset);
+                    doc.text(now_quantity, xOffset + 42, nowYOffset);
+                    doc.text(now_total, xOffset + 55, nowYOffset);
+
+                    if (ifDiscount.value) {
+                        const now_discount = (Math.floor((item.price * item.quantity) * 1000) / 1000 * discountPercent.value / 100).toFixed(2).toString();
+                        doc.setLineWidth(0.3);
+                        doc.line(xOffset + 55, nowYOffset - 1, xOffset + 62, nowYOffset - 1);
+                        nowYOffset += lineHeight;
+                        doc.text(now_discount, xOffset + 55, nowYOffset);
+                        if (text_height >= 3 * lineHeight) {
+                            // 如果文字高度>=3行，就处理yOffset
+                            nowYOffset += text_height - lineHeight * 2;
+                        }
+                    } else {
+                        if (text_height >= 2 * lineHeight) {
+                            nowYOffset += text_height - lineHeight;
+                        }
+                    }
+                    // 开始换行
+                    nowYOffset += lineHeight;
+                })
+                doc.setLineWidth(0.2);
+                doc.line(xOffset, nowYOffset - 3, xOffset + 62, nowYOffset - 3);
+                doc.text('总计', xOffset, nowYOffset + 3);
+                doc.text(realTotalPrice.value.toString(), xOffset + 55, nowYOffset + 3);
+
+                doc.save('receipt.pdf');
+                if (checkMethod === '现金支付') {
+                    const cashAmount = cashInput.value;
+                    const change = cashAmount - realTotalPrice.value;
+                } else if (checkMethod === '预付卡支付') {
+                    const cardAmount = cardInput.value;
+                    const remainingBalance = cardAmount - realTotalPrice.value;
+                } else {
+                    const onlineAmount = realTotalPrice.value;
+                }
+
+            }
+
             onMounted(() => {
                 const savedList = getShoppingListFromLocalStorage();
                 savedList.forEach(item => shoppingList.push(item));
@@ -812,6 +901,7 @@
                 showCashInput,
                 cardInput,
                 showCardInput,
+                exportCheck,
                 handleCheckClose,
                 payOnline,
                 payWithCard,

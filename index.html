@@ -312,10 +312,10 @@
                 <div v-if="showCashInput" style="margin-top: 15px; display: flex; flex-direction: row; justify-content: center">
                     <div style="width: 50%">
                         <span class="input-span" style="font-weight: bold;">支付现金: </span>
-                        <el-input-number :controls="false" style="width: 80px" v-model="cashInput" placeholder="金额" :min="realTotalPrice" :precision="2"></el-input-number>
+                        <el-input-number :controls="false" style="width: 80px" v-model="cashInput" placeholder="金额" :min="Math.floor(realTotalPrice * 10) / 10" :precision="2"></el-input-number>
                         <span class="input-span" style="margin-left: 5px">元</span>
                     </div>
-                    <span style="margin-left: 10px; margin-top: 5px; font-weight: bold;">找零: {{ (cashInput - Math.floor(realTotalPrice * 1000) / 1000).toFixed(2) }}元</span>
+                    <span style="margin-left: 10px; margin-top: 5px; font-weight: bold;">找零: {{ (cashInput - Math.floor(realTotalPrice * 10) / 10).toFixed(2) }}元</span>
                 </div>
                 <div v-if="showCardInput" style="margin-top: 20px; display: flex; flex-direction: row; justify-content: center">
                     <div style="width: 50%">
@@ -808,7 +808,7 @@
                 doc.addFileToVFS('FZSongHei_GBK-normal.ttf', font);
                 doc.addFont('FZSongHei_GBK-normal.ttf', 'FZSongHei_GBK', 'normal');  // 注册字体
                 doc.setFont('FZSongHei_GBK', 'normal');
-                doc.setFontSize(9);
+                doc.setFontSize(13);
 
                 let yOffset = 10;  // 初始 y 坐标
                 let xOffset = 10;  // 初始 x 坐标
@@ -820,13 +820,16 @@
                     const textWidth = doc.getTextWidth(text);
                     return (pageWidth - textWidth) / 2;
                 }
-                const text = '结账单';
+
+                const text = '结账收据';
                 doc.text(text, getMidTextX(text), yOffset);
+                doc.setFontSize(9);
+
                 doc.text('商品', xOffset, yOffset + lineHeight + 5);
                 doc.text('单价', xOffset + 30, yOffset + lineHeight + 5);
                 doc.text('数量', xOffset + 42, yOffset + lineHeight + 5);
                 doc.text('小计', xOffset + 55, yOffset + lineHeight + 5);
-                doc.line(xOffset, yOffset + lineHeight + 7, xOffset + 62, yOffset + lineHeight + 7);
+                doc.line(xOffset - 2, yOffset + lineHeight + 7, xOffset + 65, yOffset + lineHeight + 7);
                 const contentYOffset = yOffset + lineHeight + 7;
                 let nowXOffset = xOffset;
                 let nowYOffset = contentYOffset + lineHeight;
@@ -839,7 +842,6 @@
                     const now_total = (Math.floor((item.price * item.quantity) * 1000) / 1000).toFixed(2).toString();
 
                     name_lines.forEach((line, index) => {
-                        console.log(index, line);
                         doc.text(line, nowXOffset, nowYOffset + lineHeight * index);
                     })
                     doc.text(now_price, xOffset + 30, nowYOffset);
@@ -849,7 +851,7 @@
                     if (ifDiscount.value) {
                         const now_discount = (Math.floor((item.price * item.quantity) * 1000) / 1000 * discountPercent.value / 100).toFixed(2).toString();
                         doc.setLineWidth(0.3);
-                        doc.line(xOffset + 55, nowYOffset - 1, xOffset + 62, nowYOffset - 1);
+                        doc.line(xOffset + 55, nowYOffset - 1, xOffset + 64, nowYOffset - 1);
                         nowYOffset += lineHeight;
                         doc.text(now_discount, xOffset + 55, nowYOffset);
                         if (text_height >= 3 * lineHeight) {
@@ -865,20 +867,48 @@
                     nowYOffset += lineHeight;
                 })
                 doc.setLineWidth(0.2);
-                doc.line(xOffset, nowYOffset - 3, xOffset + 62, nowYOffset - 3);
-                doc.text('总计', xOffset, nowYOffset + 3);
-                doc.text(realTotalPrice.value.toFixed(2).toString(), xOffset + 55, nowYOffset + 3);
-
-                doc.save('receipt.pdf');
+                doc.line(xOffset - 2, nowYOffset - 2, xOffset + 65, nowYOffset - 2);
+                nowYOffset += 2;
+                doc.text('总计', xOffset, nowYOffset);
+                doc.text(realTotalPrice.value.toFixed(2).toString(), xOffset + 55, nowYOffset);
+                doc.line(xOffset - 2, nowYOffset + 2, xOffset + 65, nowYOffset + 2);
+                nowYOffset += lineHeight + 2;
                 if (checkMethod === '现金支付') {
                     const cashAmount = cashInput.value;
-                    const change = cashAmount - realTotalPrice.value;
+                    const change = cashAmount - Math.floor(realTotalPrice.value * 10) / 10;
+                    doc.text('现金支付', xOffset, nowYOffset);
+                    doc.text('应收', xOffset + 42, nowYOffset);
+                    doc.text((Math.floor(realTotalPrice.value * 10) / 10).toFixed(2).toString(), xOffset + 55, nowYOffset);
+                    nowYOffset += lineHeight;
+                    doc.text('实收', xOffset + 42, nowYOffset);
+                    doc.text(cashAmount.toFixed(2).toString(), xOffset + 55, nowYOffset);
+                    nowYOffset += lineHeight;
+                    doc.text('找零', xOffset + 42, nowYOffset);
+                    doc.text(change.toFixed(2).toString(), xOffset + 55, nowYOffset);
                 } else if (checkMethod === '预付卡支付') {
                     const cardAmount = cardInput.value;
                     const remainingBalance = cardAmount - realTotalPrice.value;
+                    doc.text('预付卡支付', xOffset, nowYOffset);
+                    doc.text('应收', xOffset + 42, nowYOffset);
+                    doc.text(realTotalPrice.value.toFixed(2).toString(), xOffset + 55, nowYOffset);
+                    nowYOffset += lineHeight;
+                    doc.text('实收', xOffset + 42, nowYOffset);
+                    doc.text(realTotalPrice.value.toFixed(2).toString(), xOffset + 55, nowYOffset);
+                    nowYOffset += lineHeight;
+                    doc.text('卡余额', xOffset + 42, nowYOffset);
+                    doc.text(remainingBalance.toFixed(2).toString(), xOffset + 55, nowYOffset);
                 } else {
                     const onlineAmount = realTotalPrice.value;
+                    doc.text('在线支付', xOffset, nowYOffset);
+                    doc.text('应收', xOffset + 42, nowYOffset);
+                    doc.text(realTotalPrice.value.toFixed(2).toString(), xOffset + 55, nowYOffset);
+                    nowYOffset += lineHeight;
+                    doc.text('实收', xOffset + 42, nowYOffset);
+                    doc.text(realTotalPrice.value.toFixed(2).toString(), xOffset + 55, nowYOffset);
                 }
+
+                doc.save('receipt.pdf');
+
 
             }
 

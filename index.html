@@ -677,13 +677,39 @@
                         return {goodsName: '', price: 0.0, quantity: 1};  // 如果未找到商品信息，返回空数据
                     }
                 } else if ( barcode.length === 24 ){
-                    // 匹配家家悦日期编码电子秤
+                    // 匹配家家悦日期编码电子秤和永旺减价产品
                     // 2 202576 00300 0000 14 241113
                     if (barcode[0] === '2') {
                         return {
                             goodsName: '电子秤' + barcode.substring(1, 7),
                             price: parseFloat(barcode.substring(7, 12)) / 100,
                             quantity: 1,
+                        }
+                    } else if (barcode[0] === '9') {
+                        // 9232 000770 6974563010261 2
+                        // 9236 000480 6974936461584 0
+                        const thisBarcode = barcode.substring(10, 23);
+                        const thisPrice = (parseFloat(barcode.substring(4,10)) / 100 ).toFixed(2);
+                        const appId = '1y9qomhkrojpgnid';
+                        const appSecret = 'dWM72BIOZ3EOA3yVgOXGfsSCvv8rwUsC';
+                        const url = `https://www.mxnzp.com/api/barcode/goods/details?barcode=${thisBarcode}&app_id=${appId}&app_secret=${appSecret}`;
+                        try {
+                            const response = await fetch(url);
+                            const data = await response.json();
+                            if (data.code === 1) {
+                                ElMessage.warning('减价商品 (参考价:' + data.data.price + '元)');
+                                return {
+                                    goodsName: data.data.goodsName + '(减价商品)',
+                                    price: thisPrice,
+                                    quantity: 1
+                                };
+                            }
+                            ElMessage.warning('减价商品');
+                            return { goodsName: '减价商品', price: thisPrice, quantity: 1 };  // 如果未找到商品信息，返回空数据
+                        } catch (err) {
+                            ElMessage.warning('减价商品');
+                            console.error('Error fetching product info:', err);
+                            return { goodsName: '减价商品', price: thisPrice, quantity: 1 };  // 捕获错误时返回空数据
                         }
                     } else {
                         return {goodsName: '', price: 0.0, quantity: 1};  // 如果未找到商品信息，返回空数据
